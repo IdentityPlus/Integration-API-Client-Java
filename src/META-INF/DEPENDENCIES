@@ -1,0 +1,27 @@
+The software in this list is not included in the package, their libraries should
+be dynamically linked. Please refer to the latest version for each of these
+compoents. The version the current software was built upon is noted in the 
+description.
+--------------------------------------------------------------------------
+
+Apache HttpComponents
+    https://hc.apache.org/
+    License: APACHE LICENSE, VERSION 2.0
+    Components: 
+        HTTPCore v4.4.4, 
+        HTTPClient v4.5.2, 
+        HTTPMime v4.5.2
+    
+Apache Commons Logging 
+    https://commons.apache.org/proper/commons-logging/
+    License: APACHE LICENSE, VERSION 2.0
+    Version: 1.2
+
+Java API for JSON Processing 
+    https://jsonp.java.net, 
+    License: COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL - Version 1.1)
+    Version: 1.0.4
+
+Java Servlet Specifications
+    Vendor dependent. The software is meant to be used in a Servlet Context 
+    
