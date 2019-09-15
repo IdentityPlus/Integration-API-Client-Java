@@ -138,9 +138,11 @@ public class Identity_Plus_API {
         if(request.isSecure()) get_id_from_certificate();
         else {
                 serial_number = request.getHeader("X-TLS-Client-Serial");
-                if(serial_number == null)  log(3, "This is not a secure (SSL/TLS) connection. If you offloading TLS on a reverse proxy, please forward the client certificate serial number in the X-TLS-Client-Serial header", null);
+                if(serial_number == null || serial_number.length() == 0)  log(3, "This is not a secure (SSL/TLS) connection. If you offloading TLS on a reverse proxy, please forward the client certificate serial number in the X-TLS-Client-Serial header", null);
                 else serial_number =  new BigInteger(serial_number, 16).toString();
         }
+        
+        if("".equals(serial_number)) serial_number = null;
         
         if(serial_number == null){
             // certificate not found, this means we either don't have SSL or the 
@@ -163,7 +165,8 @@ public class Identity_Plus_API {
             }
         }
         
-        if(this.serial_number != null){
+        // else will not work, in the upper if, the serial number might obtain a value
+        if(serial_number != null){
             // found the anonymous id
             // found the id, this means we can do device authentication
             this.identity_profile = (Identity_Profile)get_session_variable(SERIAL_NO_SESSION_KEY + "/profile");

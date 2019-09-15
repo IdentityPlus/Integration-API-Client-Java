@@ -98,6 +98,11 @@ public class Intent extends API_Request{
      */
     public final Boolean strict_massl;
     
+    /**
+     * the name of the local user (information sharing scenario)
+     */
+    public final String service_name;
+
     public Intent(Intent_Type type, String local_user_name, String name, String email_address, String phone_number, String return_url, boolean strict_massl) {
         this(type, local_user_name, name, email_address, phone_number, new BigInteger("0"), return_url, strict_massl);
     }
@@ -111,8 +116,20 @@ public class Intent extends API_Request{
         this.local_user_age = local_user_age;
         this.email_address = email_address == null ? "" : email_address;
         this.phone_number = phone_number == null ? "" : phone_number;
+        this.service_name = "";
     }
 
+    public Intent(Intent_Type type, String service, String local_user_name, String name, String email_address, String phone_number, BigInteger local_user_age, String return_url, boolean strict_massl) {
+        this.strict_massl = strict_massl;
+        this.type = type == null ? Intent_Type.discover : type;
+        this.local_user_name = local_user_name == null ? "" : local_user_name;
+        this.return_url = return_url == null ? "" : return_url;
+        this.name = name == null ? "" : name;
+        this.local_user_age = local_user_age;
+        this.email_address = email_address == null ? "" : email_address;
+        this.phone_number = phone_number == null ? "" : phone_number;
+        this.service_name = service == null ? "" : service;
+    }
     /**
      * Empty initializer, it is necessary to initialize to null the public final fields.
      * The deserializer will override the final modifier and re-initialize the fields
@@ -127,6 +144,7 @@ public class Intent extends API_Request{
         this.name = null;
         this.phone_number = null;
         this.local_user_age = null;
+        this.service_name = null;
         
         restore_object(object);
     }
