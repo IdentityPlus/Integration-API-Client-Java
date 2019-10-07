@@ -1,8 +1,10 @@
+deployment: "jar"
 
 dependencies:
-  
-  3rd-party:
-    apache-commons-logging
-    apache-http-client
-    java-json-api
-    java-servlet-api
+    projects:
+
+    third_party:
+        - "apache-commons-logging"
+        - "apache-http-client"
+        - "java-json-api"
+        - "java-servlet-api"
