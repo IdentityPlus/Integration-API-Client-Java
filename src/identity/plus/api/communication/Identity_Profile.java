@@ -112,6 +112,11 @@ public class Identity_Profile extends API_Response{
     public final BigInteger max_identity_age;
 
     /**
+     * In case this was an out of band authorization, the id of the certificate that made the authorization
+     */
+    public final BigInteger authorizing_certificate;
+
+    /**
      * Trust score, as computed by identity +. This is a logarithmic value and cannot be larger than 5.
      * see trust score analysis on the https://identity.plus/resources/api-best-practices for details 
      */
@@ -127,7 +132,7 @@ public class Identity_Profile extends API_Response{
      */
     public final BigInteger local_intrusions;
 
-    public Identity_Profile(Outcome response, String local_user_name, String[] service_roles, String user_secret, String[] trust_sponsors, BigInteger sites_frequented, BigInteger average_identity_age, BigInteger max_identity_age, BigDecimal trust_score, BigInteger local_trust, BigInteger local_intrusions) {
+    public Identity_Profile(Outcome response, String local_user_name, String[] service_roles, String user_secret, String[] trust_sponsors, BigInteger sites_frequented, BigInteger average_identity_age, BigInteger max_identity_age, BigDecimal trust_score, BigInteger local_trust, BigInteger local_intrusions, BigInteger authorizing_certificate) {
         super(response);
         
         if(trust_sponsors == null) throw new NullPointerException("Neither value can be null");
@@ -143,6 +148,7 @@ public class Identity_Profile extends API_Response{
         this.trust_score = trust_score;
         this.local_trust = local_trust;
         this.local_intrusions = local_intrusions;
+        this.authorizing_certificate = authorizing_certificate;
     }
 
     /**
@@ -163,6 +169,7 @@ public class Identity_Profile extends API_Response{
         this.trust_score = null;
         this.local_trust = null;
         this.local_intrusions = null;
+        this.authorizing_certificate = null;
         
         // call the restore mechanism
         restore_object(object);

@@ -110,6 +110,7 @@ public class API_Channel {
      */
     public static final String REDIRECT_RESPONSE_PARAMETER = "idp-api-response";
     public static final String NEW_REDIRECT_RESPONSE_PARAMETER = "resp";
+    public static final String REGISTER_RESPONSE_PARAMETER = "idp-register";
     
     /**
      * Where to make the requests. The identity+ ReST API url 
@@ -343,7 +344,7 @@ public class API_Channel {
     }
     
     /**
-     * Makes the HTTP request, given the method and the Java API Request_Object
+     * Makes the HTTP request to the default endpoint, given the method and the Java API Request_Object
      * 
      * @param method
      * @param api_request
@@ -351,6 +352,20 @@ public class API_Channel {
      * @throws IOException
      */
     private synchronized API_Response dispatch(final Request_Method method, API_Request api_request) throws IOException{
+            return dispatch(endpoint, method, api_request);
+    }
+    
+    
+    /**
+     * Makes the HTTP request to a given endpoint, given the method and the Java API Request_Object
+     * 
+     * @param endpoint. the url where the call will be made to
+     * @param method
+     * @param api_request
+     * @return
+     * @throws IOException
+     */
+    private synchronized API_Response dispatch(String endpoint, final Request_Method method, API_Request api_request) throws IOException{
         final HttpPost httppost = new HttpPost(endpoint){
             @Override
             public String getMethod() {
@@ -505,6 +520,11 @@ public class API_Channel {
     
     public API_Response issue_service_agent_identity(String service_domain, String agent_name) throws IOException{
         API_Response response = dispatch(Request_Method.put, new Service_Agent_Identity_Request(service_domain, agent_name));
+        return response;
+    }
+
+    public API_Response issue_service_agent_identity(String intent_id, String service_domain, String agent_name) throws IOException{
+        API_Response response = dispatch(certificate_validation_endpoint(""), Request_Method.put, new Service_Agent_Identity_Request(service_domain, agent_name));
         return response;
     }
 }

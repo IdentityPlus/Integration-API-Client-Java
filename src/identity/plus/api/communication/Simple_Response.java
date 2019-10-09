@@ -49,9 +49,17 @@ public class Simple_Response extends API_Response{
      * The JSON Name of this response object as returned by the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Simple_Response.class);
+
+    public final String message;
     
     public Simple_Response(Outcome response) {
         super(response);
+        this.message = null;
+    }
+
+    public Simple_Response(Outcome response, String message) {
+        super(response);
+        this.message = message;
     }
 
     /**
@@ -60,6 +68,8 @@ public class Simple_Response extends API_Response{
      * with the proper values  
      */
     public Simple_Response(JsonObject object){
+        this.message = null;
+        
         restore_object(object);
     }
 }

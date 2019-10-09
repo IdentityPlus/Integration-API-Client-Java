@@ -71,9 +71,22 @@ public class Service_Agent_Identity_Request extends API_Request{
      */
     public final String service_domain;
     
-    public Service_Agent_Identity_Request(String service_domain, String agent_name){
+    /**
+     * Authorization token.
+     * This is only necessary if the agent is not authenticating itself with another, previously existing certificate
+     */
+    public final String authorization;
+
+    public Service_Agent_Identity_Request(String service_domain, String agent_name, String authorization){
             this.service_domain = service_domain;
             this.agent_name = agent_name;
+            this.authorization = authorization;
+    }
+
+    public Service_Agent_Identity_Request(String service_domain, String agent_name){
+        this.service_domain = service_domain;
+        this.agent_name = agent_name;
+        this.authorization = null;
     }
 
     /**
@@ -84,6 +97,7 @@ public class Service_Agent_Identity_Request extends API_Request{
     public Service_Agent_Identity_Request(JsonObject object){
             this.agent_name = null;
             this.service_domain = null;
+            this.authorization = null;
             
             restore_object(object);
     }
