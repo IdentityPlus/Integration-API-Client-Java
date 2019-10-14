@@ -108,9 +108,9 @@ public class API_Channel {
     /**
      * The parameter name when the response comes via redirect (legacy http identity+ only)
      */
-    public static final String REDIRECT_RESPONSE_PARAMETER = "idp-api-response";
-    public static final String NEW_REDIRECT_RESPONSE_PARAMETER = "resp";
-    public static final String REGISTER_RESPONSE_PARAMETER = "idp-register";
+    public static final String LEGACY_REDIRECT_RESPONSE_PARAMETER = "resp";
+    public static final String NEW_REDIRECT_RESPONSE_PARAMETER = "identity-plus-intent";
+    public static final String REGISTER_RESPONSE_PARAMETER = "identity-plus-register-intent";
     
     /**
      * Where to make the requests. The identity+ ReST API url 

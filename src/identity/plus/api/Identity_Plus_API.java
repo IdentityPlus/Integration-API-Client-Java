@@ -271,7 +271,7 @@ public class Identity_Plus_API {
     protected void get_id_from_legacy_response(){
         // we do not have SSL so we check if we receive the anonymous id via redirect
         try{
-            byte[] response_data = Base64.getUrlDecoder().decode(http_request.getParameter(API_Channel.REDIRECT_RESPONSE_PARAMETER));
+            byte[] response_data = Base64.getUrlDecoder().decode(http_request.getParameter(API_Channel.LEGACY_REDIRECT_RESPONSE_PARAMETER));
 
             // we need to decrypt it with our private key because this data is encrypted with our public key,
             // which in this particular case is not so public, but rather only known by the Identity + service
@@ -408,7 +408,7 @@ public class Identity_Plus_API {
         String query = http_request.getQueryString();
         if(query != null && query.length() > 0){
             // strip away idp api response if there is one
-            int idx = query.indexOf("idp-api-response="); 
+            int idx = query.indexOf(API_Channel.NEW_REDIRECT_RESPONSE_PARAMETER); 
             if(idx >= 0){
                 int end = query.indexOf("&", idx);
                 query = query.substring(0, idx) + (end >= 0 ? query.substring(end) : "");
