@@ -103,6 +103,10 @@ public class Intent extends API_Request{
      */
     public final String service_name;
 
+    public Intent(Intent_Type type) {
+        this(type, null, null, null, null, new BigInteger("0"), null, true);
+    }
+
     public Intent(Intent_Type type, String local_user_name, String name, String email_address, String phone_number, String return_url, boolean strict_massl) {
         this(type, local_user_name, name, email_address, phone_number, new BigInteger("0"), return_url, strict_massl);
     }

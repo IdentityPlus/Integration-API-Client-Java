@@ -40,7 +40,7 @@ package identity.plus.api.communication;
  * @author Stefan Harsan Farr
  */
 public enum Intent_Type {
-    /* Validate the certificate and return. This essentially tells identityplus that the service was able to read the certificate but got needs validation error over API */
+    /* Validate the certificate and return. This essentially tells identity plus that the service was able to read the certificate but got needs validation error over API */
     validate, 
 
     /* check if the device has a certificate. This is usually necessary if the site cannot read the certificate itself. No action will be performed if certificate is not found */
@@ -53,5 +53,8 @@ public enum Intent_Type {
     bind,
 
     /* request this device to be certified and bind local user to it. Connect device or sign up for identity plus if necessary. The operation will be performed under the brand of the domain */
-    assume_ownership;
+    assume_ownership,
+
+    /* intention to establish relationship with another person */
+    befriend;
 }
