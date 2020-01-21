@@ -54,11 +54,21 @@ public class Intent_Reference extends API_Response{
      * The intent to refer
      */
     public final String value;
+
+    public final String challenge;
     
     public Intent_Reference(String value) {
         super(Outcome.OK_0000_Acknowledged);
         if(value == null) throw new NullPointerException("Intrusion reference must be specified");
         this.value = value;
+        this.challenge = null;
+    }
+
+    public Intent_Reference(String value, String challenge) {
+        super(Outcome.OK_0000_Acknowledged);
+        if(value == null) throw new NullPointerException("Intrusion reference must be specified");
+        this.value = value;
+        this.challenge = challenge;
     }
 
     /**
@@ -68,6 +78,7 @@ public class Intent_Reference extends API_Response{
      */
     public Intent_Reference(JsonObject object){
         value = null;
+        challenge = null;
         restore_object(object);
     }
 }

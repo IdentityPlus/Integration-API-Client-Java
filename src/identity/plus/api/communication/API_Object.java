@@ -99,7 +99,7 @@ public abstract class API_Object implements Serializable{
                     else if(f.getType() == BigDecimal.class) f.set(this, new BigDecimal(string_value == null || string_value.length() == 0 ? "0" : string_value));
                     else if(f.getType() == Boolean.class) f.set(this, Boolean.valueOf(string_value == null || string_value.length() == 0 ? "false" : string_value));
                     else if(f.getType() == byte[].class) f.set(this, string_value == null ? null : Base64.getDecoder().decode(string_value));
-                    else if(Enum.class.isAssignableFrom(f.getType())) f.set(this, Enum.valueOf(f.getType().asSubclass(Enum.class), string_value.replace(' ', '_')));
+                    else if(Enum.class.isAssignableFrom(f.getType())) f.set(this, Enum.valueOf(f.getType().asSubclass(Enum.class), string_value.replace(' ', '_').replace('-', '_')));
                 }
             }
         }
