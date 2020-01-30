@@ -3,7 +3,7 @@ runtime:
 
 build:
 
-    deployment: "jar"
+    deployment: "jar/lib"
 
     dependencies:
         projects:
