@@ -6,10 +6,10 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/home/stefan/deployer/repositories/artifactory/java-json-api/javax.json-1.0.4.jar"/>
-	<classpathentry kind="lib" path="/home/stefan/deployer/repositories/artifactory/apache-http-client/httpmime-4.5.2.jar"/>
-	<classpathentry kind="lib" path="/home/stefan/deployer/repositories/artifactory/apache-http-client/httpcore-4.4.4.jar"/>
-	<classpathentry kind="lib" path="/home/stefan/deployer/repositories/artifactory/apache-http-client/httpclient-4.5.2.jar"/>
-	<classpathentry kind="lib" path="/home/stefan/deployer/repositories/artifactory/java-servlet-api/servlet-api-3.1.jar"/>
+	<classpathentry kind="lib" path="/Artifactory/apache-http-client/httpclient-4.5.2.jar"/>
+	<classpathentry kind="lib" path="/Artifactory/apache-http-client/httpcore-4.4.4.jar"/>
+	<classpathentry kind="lib" path="/Artifactory/apache-http-client/httpmime-4.5.2.jar"/>
+	<classpathentry kind="lib" path="/Artifactory/java-json-api/javax.json-1.0.4.jar"/>
+	<classpathentry kind="lib" path="/Artifactory/java-servlet-api/servlet-api-3.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
