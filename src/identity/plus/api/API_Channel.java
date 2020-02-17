@@ -378,10 +378,12 @@ public class API_Channel {
         final HttpEntity answer = response.getEntity();
         
 
-        //        this is for testing purposes only - it actually breaks the content of the answer (exhausts the stream)
-        //        byte[] data = new byte[2000];
-        //        int amount = answer.getContent().read(data);
-        //        System.out.println(new String(data, "UTF-8"));
+//                this is for testing purposes only - it actually breaks the content of the answer (exhausts the stream)
+//                byte[] data = new byte[2000];
+//                StringBuilder ct = new StringBuilder();
+//                int amount = -1;
+//                while((amount = answer.getContent().read(data)) > -1) ct.append(new String(data, 0, amount, "UTF-8"));
+//                System.out.println(ct.toString());
         
         JsonReader reader = Json.createReader(new InputStreamReader(answer.getContent(), "UTF-8"));
         JsonObject jsso = reader.readObject();

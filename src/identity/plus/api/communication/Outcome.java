@@ -75,6 +75,7 @@ public enum Outcome {
     ER_0009_Request_Denied("ER_0009", None),
     ER_0010_Insufficient_Reference_Information("ER_0010", None),
     ER_0011_Incomplete_Message_Error("ER_0011", None),
+    ER_0012_Expecting_Service_Agent("ER_0012", None),
 
     ER_1100_No_Identity_Plus_API_certificate_presented("ER_1100", Fix_API_Problem),
     ER_1101_Unknown_Identity_Plus_API_certificate("ER_1101", Evasive_Maneuver),
