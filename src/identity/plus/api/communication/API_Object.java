@@ -68,12 +68,7 @@ public abstract class API_Object implements Serializable{
                 
                 // skip the static fields
                 if(Modifier.isStatic(modifiers)) continue;
-                
-                Field modifierField = f.getClass().getDeclaredField("modifiers");
-                modifiers = modifiers & ~Modifier.FINAL;
-                modifierField.setAccessible(true);
-                modifierField.setInt(f, modifiers);
-                
+                                
                 String name = f.getName().replace('_', '-');
                 
                 if(!object.containsKey(name)) continue;
