@@ -6,7 +6,7 @@
 	<classpathentry kind="lib" path="/Artifactory/apache-http-client/httpmime-4.5.2.jar"/>
 	<classpathentry kind="lib" path="/Artifactory/java-json-api/javax.json-1.0.4.jar"/>
 	<classpathentry kind="lib" path="/Artifactory/java-servlet-api/servlet-api-3.1.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-10">
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-13">
 		<attributes>
 			<attribute name="owner.project.facets" value="java"/>
 		</attributes>
