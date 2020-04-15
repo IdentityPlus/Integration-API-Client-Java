@@ -132,7 +132,17 @@ public class Identity_Profile extends API_Response{
      */
     public final BigInteger local_intrusions;
 
-    public Identity_Profile(Outcome response, String local_user_name, String[] service_roles, String user_secret, String[] trust_sponsors, BigInteger sites_frequented, BigInteger average_identity_age, BigInteger max_identity_age, BigDecimal trust_score, BigInteger local_trust, BigInteger local_intrusions, BigInteger authorizing_certificate) {
+    /**
+     * Your guarantees
+     */
+    public final List<String> your_guarantees;
+    
+    /**
+     * Your guarantees
+     */
+    public final List<String> community_guarantees;
+
+    public Identity_Profile(Outcome response, String local_user_name, String[] service_roles, String user_secret, String[] trust_sponsors, BigInteger sites_frequented, BigInteger average_identity_age, BigInteger max_identity_age, BigDecimal trust_score, BigInteger local_trust, BigInteger local_intrusions, BigInteger authorizing_certificate, String[] your_guarantees, String[] community_guarantees) {
         super(response);
         
         if(trust_sponsors == null) throw new NullPointerException("Neither value can be null");
@@ -149,6 +159,8 @@ public class Identity_Profile extends API_Response{
         this.local_trust = local_trust;
         this.local_intrusions = local_intrusions;
         this.authorizing_certificate = authorizing_certificate;
+        this.your_guarantees = Collections.unmodifiableList(Arrays.asList(your_guarantees));
+        this.community_guarantees = Collections.unmodifiableList(Arrays.asList(community_guarantees));
     }
 
     /**
@@ -170,6 +182,8 @@ public class Identity_Profile extends API_Response{
         this.local_trust = null;
         this.local_intrusions = null;
         this.authorizing_certificate = null;
+        this.your_guarantees = null;
+        this.community_guarantees = null;
         
         // call the restore mechanism
         restore_object(object);
