@@ -1,15 +1,7 @@
-runtime:
-    # this is library only, does not have runtime configuraton
-
-build:
-
-    deployment: "jar/lib"
-
-    dependencies:
-        projects:
-
-        third_party:
-            - "apache-commons-logging"
-            - "apache-http-client"
-            - "java-json-api"
-            - "java-servlet-api"
+dependencies:
+    projects:
+    third_party:
+        - "apache-commons-logging"
+        - "apache-http-client"
+        - "java-json-api"
+        - "java-servlet-api"
