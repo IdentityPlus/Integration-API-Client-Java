@@ -62,6 +62,7 @@ public enum Outcome {
     PB_0005_Intruder_Certificate("PB_0005", Evasive_Maneuver),
     PB_0006_Unknown_Identity_Plus_anonymous_certificate("PB_0006", Evasive_Maneuver),
     PB_0007_Crypto_Failure_package_was_tempered_with("PB_0007", Evasive_Maneuver),
+    PB_0008_Authorization_Expired("PB_0008", Evasive_Maneuver),
 
     ER_0000_Undetermined_error("ER_0000", None),
     ER_0001_Unknown_request_error("ER_0001", None),

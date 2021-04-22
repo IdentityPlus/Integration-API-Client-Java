@@ -36,7 +36,6 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
@@ -57,6 +56,18 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.net.ssl.SSLContext;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
+import org.apache.http.util.EntityUtils;
 
 import identity.plus.api.communication.API_Request;
 import identity.plus.api.communication.API_Response;
@@ -82,7 +93,6 @@ import identity.plus.api.communication.Simple_Response;
 import identity.plus.api.communication.Trust;
 import identity.plus.api.communication.Unlock_Request;
 import identity.plus.api.communication.User_Secret;
-import identity.plus.api.util.HTTPS_Utils;
 
 /**
  * Singleton Class responsible with conveying information from and to the server via the identity+ http api
@@ -96,7 +106,7 @@ import identity.plus.api.util.HTTPS_Utils;
  *
  * @author Stefan Harsan Farr
  */
-public class API_Channel {    
+public class API_Channel2 {    
     /**
      * The parameter name when the response comes via redirect (legacy http identity+ only)
      */
@@ -120,9 +130,10 @@ public class API_Channel {
     public final X509Certificate certificate;
 
     /**
-     * SSLContext, we can re-use this
+     * HTTP Client engine from Apache HTTP Client library
      */
-    private final SSLContext tls_context;
+    private final CloseableHttpClient client;
+
     /**
      * Constructor
      * 
@@ -138,8 +149,8 @@ public class API_Channel {
      * @throws KeyManagementException
      * @throws UnrecoverableKeyException
      */
-    public API_Channel(final String endpoint, String key_store_location, String key_store_pass) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, KeyManagementException, UnrecoverableKeyException {
-        this(endpoint, key_store_location, key_store_pass, null);
+    public API_Channel2(final String endpoint, String key_store_location, String key_store_pass) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, KeyManagementException, UnrecoverableKeyException {
+        this(endpoint, key_store_location, key_store_pass, false);
     }    
     /**
      * Constructor
@@ -157,17 +168,71 @@ public class API_Channel {
      * @throws KeyManagementException
      * @throws UnrecoverableKeyException
      */
-    public API_Channel(String endpoint, String key_store_location, String key_store_pass, String trust_store_location) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, KeyManagementException, UnrecoverableKeyException {
+    public API_Channel2(String endpoint, String key_store_location, String key_store_pass, boolean trust_self_signed_certificates) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, KeyManagementException, UnrecoverableKeyException {
 
-        KeyStore credentials = HTTPS_Utils.load_credentials(HTTPS_Utils.drain(new FileInputStream(key_store_location)), key_store_pass);
-        KeyStore trusted_authorities = HTTPS_Utils.load_trusted_authorities(HTTPS_Utils.drain(new FileInputStream(trust_store_location)));
+        KeyStore ks = KeyStore.getInstance("JKS");
+        ks.load(new FileInputStream(key_store_location), key_store_pass.toCharArray());
+        private_key = (PrivateKey)ks.getKey(Identity_Plus_Utils.API_CERT_ALIAS, key_store_pass.toCharArray());
+        certificate = (X509Certificate)ks.getCertificate(Identity_Plus_Utils.API_CERT_ALIAS);
         
+        if(endpoint == null) endpoint = Identity_Plus_Utils.extract_dn_field(certificate.getSubjectX500Principal(), "C");
         this.endpoint = endpoint;
-        this.certificate = (X509Certificate)credentials.getCertificate(Identity_Plus_Utils.API_CERT_ALIAS);
-        private_key = (PrivateKey)credentials.getKey(Identity_Plus_Utils.API_CERT_ALIAS, key_store_pass.toCharArray());
-        this.tls_context = HTTPS_Utils.prepare_tls_context(credentials, key_store_pass != null ? key_store_pass.toCharArray() : new char[]{}, trusted_authorities);
+        
+        SSLContextBuilder ssl_context_builder = SSLContexts.custom();
+        ssl_context_builder.loadKeyMaterial(ks, key_store_pass.toCharArray());
+        if(trust_self_signed_certificates) ssl_context_builder.loadTrustMaterial(null, new TrustSelfSignedStrategy() {
+                @Override
+                public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                    return true;
+                }
+        });
+        
+        SSLContext sslcontext = ssl_context_builder.build();
+
+        client = HttpClients.custom()
+                        .setUserAgent("Identity + API Client")
+                        .setSSLContext(sslcontext)
+                        .disableAutomaticRetries()
+                        .setKeepAliveStrategy(new DefaultConnectionKeepAliveStrategy())
+                        .build();
     }
 
+    /**
+     * Explicite Constructor
+     * 
+     * @param endpoint, same as field (Where to make the requests. The identity+ ReST API url )
+     * @param key_store, the keystore, th JKS keystore download when the API certificate was issued
+     * @param key_store_pass, the keystore password. Unless you changed it, this is the password generated by identity + when the API certificate was issued
+     * @param trust_store, Trust store must contain the identity + root certificate and preferably intermediate certificate as well
+     * 
+     * @throws KeyStoreException
+     * @throws NoSuchAlgorithmException
+     * @throws CertificateException
+     * @throws FileNotFoundException
+     * @throws IOException
+     * @throws KeyManagementException
+     * @throws UnrecoverableKeyException
+     */
+    public API_Channel2(final String endpoint,  String key_store_location, String key_store_pass, KeyStore trust_store) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, KeyManagementException, UnrecoverableKeyException {
+        this.endpoint = endpoint;
+
+        KeyStore key_store = KeyStore.getInstance("JKS");
+        key_store.load(new FileInputStream(key_store_location), key_store_pass.toCharArray());
+        private_key = (PrivateKey)key_store.getKey(Identity_Plus_Utils.API_CERT_ALIAS, key_store_pass.toCharArray());
+        certificate = (X509Certificate)key_store.getCertificate(Identity_Plus_Utils.API_CERT_ALIAS);
+        
+        SSLContext sslcontext = SSLContexts.custom()
+                        .loadKeyMaterial(key_store, key_store_pass.toCharArray())
+                        .loadTrustMaterial(trust_store, new TrustSelfSignedStrategy())
+                        .build();
+        
+        client = HttpClients.custom()
+                        .setUserAgent("Identity + API Client")
+                        .setSSLContext(sslcontext)
+                        .disableAutomaticRetries()
+                        .setKeepAliveStrategy(new DefaultConnectionKeepAliveStrategy())
+                        .build();
+    }
 
     /**
      * Performs a get request for the Identity_Enquiry object
@@ -177,7 +242,7 @@ public class API_Channel {
      * @throws IOException
      */
     public synchronized API_Response get(Identity_Inquiry certificate_info) throws IOException{
-        return dispatch(Request_Method.GET, certificate_info);
+        return dispatch(Request_Method.get, certificate_info);
     }
 
     /**
@@ -188,7 +253,7 @@ public class API_Channel {
      * @throws IOException
      */
     public synchronized API_Response ping() throws IOException{
-        return dispatch(Request_Method.PUT, null);
+        return dispatch(Request_Method.get, null);
     }
 
     /**
@@ -199,7 +264,7 @@ public class API_Channel {
      * @throws IOException
      */
     public synchronized API_Response put(Local_User_Information local_user_information) throws IOException{
-        return dispatch(Request_Method.PUT, local_user_information);
+        return dispatch(Request_Method.put, local_user_information);
     }
     
     /**
@@ -210,7 +275,7 @@ public class API_Channel {
      * @throws IOException
      */
     public synchronized API_Response put(Unlock_Request unlock_request) throws IOException{
-        return dispatch(Request_Method.PUT, unlock_request);
+        return dispatch(Request_Method.put, unlock_request);
     }
 
     /**
@@ -221,7 +286,7 @@ public class API_Channel {
      * @throws IOException
      */
     public synchronized API_Response put(Intrusion_Report intrusion_report) throws IOException{
-        return dispatch(Request_Method.PUT, intrusion_report);
+        return dispatch(Request_Method.put, intrusion_report);
     }
 
     /**
@@ -233,7 +298,7 @@ public class API_Channel {
      * @throws IOException
      */
     public synchronized API_Response put(Intent intent) throws IOException{
-        return dispatch(Request_Method.PUT, intent);
+        return dispatch(Request_Method.put, intent);
     }
 
     /**
@@ -244,7 +309,7 @@ public class API_Channel {
      * @throws IOException
      */
     public synchronized API_Response put(Trust local_user_update) throws IOException{
-        return dispatch(Request_Method.PUT, local_user_update);
+        return dispatch(Request_Method.put, local_user_update);
     }
 
     /**
@@ -255,7 +320,7 @@ public class API_Channel {
      * @throws IOException
      */
     public synchronized API_Response put(Personal_Data_Disclosure_Request pii_disclosure) throws IOException{
-        return dispatch(Request_Method.PUT, pii_disclosure);
+        return dispatch(Request_Method.put, pii_disclosure);
     }
 
     /**
@@ -266,7 +331,7 @@ public class API_Channel {
      * @throws IOException
      */
     public synchronized API_Response put(Message_Delivery_Request mesage_delivery_request) throws IOException{
-        return dispatch(Request_Method.PUT, mesage_delivery_request);
+        return dispatch(Request_Method.put, mesage_delivery_request);
     }
 
     /**
@@ -277,7 +342,7 @@ public class API_Channel {
      * @throws IOException
      */
     public synchronized API_Response put(User_Secret secret) throws IOException{
-        return dispatch(Request_Method.PUT, secret);
+        return dispatch(Request_Method.put, secret);
     }
 
     /**
@@ -288,7 +353,7 @@ public class API_Channel {
      * @throws IOException
      */
     public synchronized API_Response delete(Local_User_Reference local_user_ref) throws IOException{
-        return dispatch(Request_Method.DELETE, local_user_ref);
+        return dispatch(Request_Method.delete, local_user_ref);
     }
     
     /**
@@ -314,16 +379,32 @@ public class API_Channel {
      * @throws IOException
      */
     private synchronized API_Response dispatch(String endpoint, final Request_Method method, API_Request api_request) throws IOException{
+        final HttpPost httppost = new HttpPost(endpoint){
+            @Override
+            public String getMethod() {
+                return method == Request_Method.delete ? "DELETE" : method == Request_Method.put ? "PUT" : super.getMethod();
+            }
+        };
+        httppost.setEntity(new StringEntity(api_request != null ? api_request.to_json() : ""));
 
-        API_Response[] response = {null};
+        final CloseableHttpResponse response = client.execute(httppost);
+        final HttpEntity answer = response.getEntity();
         
-        HTTPS_Utils.call(endpoint, method.name(), new String[]{"Content-Type: application/json", "User-Agent: Identity + API Client"}, api_request != null ? api_request.to_json() : "", tls_context,  (int code, InputStream body) -> {
-                JsonReader reader = Json.createReader(body);
-                JsonObject jsso = reader.readObject();
-                response[0] = decode_response(jsso);
-        });
+
+//                this is for testing purposes only - it actually breaks the content of the answer (exhausts the stream)
+//                byte[] data = new byte[2000];
+//                StringBuilder ct = new StringBuilder();
+//                int amount = -1;
+//                while((amount = answer.getContent().read(data)) > -1) ct.append(new String(data, 0, amount, "UTF-8"));
+//                System.out.println(ct.toString());
         
-        return response[0];
+        JsonReader reader = Json.createReader(new InputStreamReader(answer.getContent(), "UTF-8"));
+        JsonObject jsso = reader.readObject();
+
+        EntityUtils.consume(answer);
+        httppost.releaseConnection();
+
+        return decode_response(jsso);
     }
     
     /**
@@ -445,7 +526,7 @@ public class API_Channel {
     }
     
     public API_Response issue_service_identity(String service_domain, boolean force) throws IOException{
-        API_Response response = dispatch(Request_Method.PUT, new Service_Identity_Request(service_domain, force));
+        API_Response response = dispatch(Request_Method.put, new Service_Identity_Request(service_domain, force));
         return response;
     }
 
@@ -454,12 +535,12 @@ public class API_Channel {
     }
     
     public API_Response issue_service_agent_identity(String service_domain, String agent_name) throws IOException{
-        API_Response response = dispatch(Request_Method.PUT, new Service_Agent_Identity_Request(service_domain, agent_name));
+        API_Response response = dispatch(Request_Method.put, new Service_Agent_Identity_Request(service_domain, agent_name));
         return response;
     }
 
     public API_Response issue_service_agent_identity(String intent_id, String service_domain, String agent_name) throws IOException{
-        API_Response response = dispatch(certificate_validation_endpoint(""), Request_Method.PUT, new Service_Agent_Identity_Request(service_domain, agent_name));
+        API_Response response = dispatch(certificate_validation_endpoint(""), Request_Method.put, new Service_Agent_Identity_Request(service_domain, agent_name));
         return response;
     }
 }

@@ -115,18 +115,30 @@ public abstract class API_Object implements Serializable{
                 String name = f.getName().replace('_', '-');
                 
                 if(val == null) continue;
-                else if(val instanceof String) b.add(name, (String)val);
-                else if(val instanceof BigInteger) b.add(name, (BigInteger)val);
-                else if(val instanceof BigDecimal) b.add(name, (BigDecimal)val);
-                else if(val instanceof Boolean) b.add(name, (Boolean)val);
+                else if(val instanceof String) {
+                        if(((String)val).length() > 0) b.add(name, (String)val);
+                }
+                else if(val instanceof BigInteger) {
+                        if(((BigInteger)val).intValue() != 0) b.add(name, (BigInteger)val);
+                }
+                else if(val instanceof BigDecimal) {
+                        if(((BigDecimal)val).doubleValue() != 0) b.add(name, (BigDecimal)val);
+                }
+                else if(val instanceof Boolean) {
+                        if(!((Boolean)val).booleanValue()) b.add(name, (Boolean)val);
+                }
                 else if(val instanceof Date) b.add(name, ((Date)val).getTime());
-                else if(val instanceof byte[]) b.add(name, Base64.getEncoder().encodeToString((byte[])val));
+                else if(val instanceof byte[]) {
+                        if(((byte[])val).length > 0) b.add(name, Base64.getEncoder().encodeToString((byte[])val));
+                }
                 else if(val instanceof Enum) b.add(name, ((Enum<?>)val).name().replace('_', ' '));
                 else if(val instanceof List){
-                    JsonArrayBuilder array_b = Json.createArrayBuilder();
-                    for(Object ts : (List<?>)val) array_b.add(ts.toString());
-                    
-                    b.add(name, array_b);
+                        if(((List)val).size() > 0) {
+                                JsonArrayBuilder array_b = Json.createArrayBuilder();
+                                for(Object ts : (List<?>)val) array_b.add(ts.toString());
+                                
+                                b.add(name, array_b);
+                        }
                 }
                 else throw new RuntimeException("Unsupported type: " + val.getClass() + ", for field: " + name);
             }

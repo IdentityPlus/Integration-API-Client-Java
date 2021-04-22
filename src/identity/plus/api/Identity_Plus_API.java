@@ -59,6 +59,7 @@ import identity.plus.api.communication.Message_Delivery_Request;
 import identity.plus.api.communication.Outcome;
 import identity.plus.api.communication.Personal_Data_Disclosure_Request;
 import identity.plus.api.communication.Trust;
+import identity.plus.api.communication.Unlock_Request;
 import identity.plus.api.communication.User_Secret;
 /**
  * The Identity + API wrapper.
@@ -156,7 +157,7 @@ public class Identity_Plus_API {
                 serial_number = (String)get_session_variable(SERIAL_NO_SESSION_KEY);
 
                 // will go the legacy way only if this is a legacy redirect callback
-                if(serial_number == null && is_legacy_call()) {
+                if(serial_number == null && is_legacy_call()){
                         serial_number = get_legacy_response_reference(); // get_id_from_legacy_response();
                         if(serial_number != null) {
                                 set_session_variable(SERIAL_NO_SESSION_KEY, serial_number);
@@ -261,7 +262,7 @@ public class Identity_Plus_API {
      * @return
      */
     public boolean is_legacy_call(){
-        return http_request.getParameter(API_Channel.NEW_REDIRECT_RESPONSE_PARAMETER) != null;
+        return http_request.getMethod().equals("GET") && http_request.getParameter(API_Channel.NEW_REDIRECT_RESPONSE_PARAMETER) != null;
     }
     
     /**
@@ -474,6 +475,29 @@ public class Identity_Plus_API {
 
         update_cached_profile(response);
     }
+
+    /**
+     * Creates an identity plus identity and connect it to local user. Formats and submits the request via the channel
+     * Formats the request, calls it via the api channel and updates the cached user profile
+     * 
+     * @param local_user_uid, local unique user reference (id)
+     * @param account_age_in_days, how long is this account with your service, in days
+     * @param tokes_of_trust_as_of_yet, tokens of trust you want to award this user. 10 will be added by default
+     * @throws IOException
+     */
+    public void register_user(String local_user_uid, int account_age_in_days, int tokes_of_trust_as_of_yet) throws IOException{
+        tokes_of_trust_as_of_yet = Math.min(tokes_of_trust_as_of_yet, 2500); // do not put more than 2500 points, the max amount that can be gathered on one site is 10000
+        tokes_of_trust_as_of_yet = Math.max(10, tokes_of_trust_as_of_yet); // do not put less than 10 point. Being a user means trust
+        API_Response response = api_channel.put(new Local_User_Information(
+                                    null,
+                                    "+",
+                                    local_user_uid, 
+                                    new BigInteger(String.valueOf(account_age_in_days)), 
+                                    new BigInteger(String.valueOf(tokes_of_trust_as_of_yet))
+                        ));
+
+        update_cached_profile(response);
+    }
     
     public void put_trust() throws IOException{
         put_trust(Object_Of_Trust.random);
@@ -492,6 +516,21 @@ public class Identity_Plus_API {
             update_cached_profile(response);
         }
         else outcome = Outcome.ER_0005_Subject_user_name_was_never_associated;
+    }
+
+    /**
+     * Change the user secret. Please refer to best practices with this
+     * Formats the request, calls it via the api channel and updates the cached user profile
+     * 
+     * @param secret
+     * @throws IOException
+     */
+    public API_Response unlock(String local_user_name) throws IOException{
+            API_Response response = api_channel.put(new Unlock_Request(local_user_name));
+            
+            this.outcome = response.outcome;
+            
+            return response;
     }
     
     /**

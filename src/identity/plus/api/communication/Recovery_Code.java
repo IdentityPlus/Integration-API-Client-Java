@@ -37,31 +37,26 @@ import javax.json.JsonObject;
 import identity.plus.api.Identity_Plus_Utils;
 
 /**
- * The Agent Certificate Renewal request is used to issue certificates for Service Agents (Clients). 
- * This can happen in two ways,:
- * either the request is made for a valid previous certificate, in which a renewal procedure is executed,
- * or it needs to be performed with an initial secret and then an issuing is performed.
- * A service agent can rewnew its own certificate this way, but care must be taken as the previous certificate will be 
- * revoked uppon issuing the new one.
+ * The ID of an out of band authorization that can be used to issue a device identity
  * 
  * @author Stefan Harsan Farr
  */
-public class Identity_Revocation_Request extends API_Request{
+public class Recovery_Code extends API_Response{
     private static final long serialVersionUID = 1L;
     
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this response object as returned by the ReST API
      */
-    public static final String JSON_NAME = Identity_Plus_Utils.json_name(Identity_Revocation_Request.class);
-
+    public static final String JSON_NAME = Identity_Plus_Utils.json_name(Recovery_Code.class);
+   
     /**
-     * Name of the agent to issue certificate for.
-     * If the name exists, it will renew, otherwise it will create a new agent
+     * The reference number value
      */
-    public final String serial_number;
+    public final String value;
     
-    public Identity_Revocation_Request(String serial_number){
-            this.serial_number = serial_number;
+    public Recovery_Code(Outcome response, String value) {
+        super(response);
+        this.value = value;
     }
 
     /**
@@ -69,9 +64,11 @@ public class Identity_Revocation_Request extends API_Request{
      * The deserializer will override the final modifier and re-initialize the fields
      * with the proper values  
      */
-    public Identity_Revocation_Request(JsonObject object){
-            this.serial_number = null;
-            
-            restore_object(object);
+    public Recovery_Code(JsonObject object){
+        // initialize fields to null
+        this.value = null;
+        
+        // call the restore mechanism
+        restore_object(object);
     }
 }

@@ -63,17 +63,8 @@ public class Identity_Profile extends API_Response{
      * In case no local user id was bound to the identity + account by the requesting API Client
      * this field will be empty.
      */
-    @Deprecated
-    public final String local_user_id;
-
-    /**
-     * The local user id that was bound with the identity+ account to which the validated 
-     * anonymous id belongs to, if any.
-     * 
-     * In case no local user id was bound to the identity + account by the requesting API Client
-     * this field will be empty.
-     */
     public final String local_user_name;
+    public final String local_user_id;
 
     /**
      * A list of web sites which the user chose as trust sponsors. An empty list can mean
@@ -147,8 +138,8 @@ public class Identity_Profile extends API_Response{
         
         if(trust_sponsors == null) throw new NullPointerException("Neither value can be null");
         
-        this.local_user_id = local_user_name;
         this.local_user_name = local_user_name;
+        this.local_user_id = local_user_name;
         this.user_secret = user_secret;
         this.trust_sponsors = Collections.unmodifiableList(Arrays.asList(trust_sponsors));
         this.service_roles = Collections.unmodifiableList(Arrays.asList(service_roles));
@@ -170,8 +161,8 @@ public class Identity_Profile extends API_Response{
      */
     public Identity_Profile(JsonObject object){
         // initialize fields to null
-        this.local_user_id = null;
         this.local_user_name = null;
+        this.local_user_id = null;
         this.service_roles = null;
         this.user_secret = null;
         this.trust_sponsors = null;

@@ -38,5 +38,5 @@ package identity.plus.api;
  * @author Stefan Harsan Farr
  */
 public enum Request_Method {
-    get, post, delete, put
+    GET, POST, DELETE, PUT
 }
