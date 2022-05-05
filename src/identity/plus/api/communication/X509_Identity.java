@@ -37,38 +37,46 @@ import javax.json.JsonObject;
 import identity.plus.api.Identity_Plus_Utils;
 
 /**
- * The Intent_Reference response is needed to reference the intended operation & context when redirecting the user to Identity Plus
+ * The core response for most request containing a reference number
+ * It comes in response to a call that requires a reference number such as an intrusion report
  * 
- * @since v2
  * @author Stefan Harsan Farr
  */
-public class Intent_Reference extends API_Response{
+public class X509_Identity extends API_Response{
     private static final long serialVersionUID = 1L;
     
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this response object as returned by the ReST API
      */
-    public static final String JSON_NAME = Identity_Plus_Utils.json_name(Intent_Reference.class);
+    public static final String JSON_NAME = Identity_Plus_Utils.json_name(X509_Identity.class);
+   
+    /**
+     * p12 certificate format
+     */
+    public final byte[] p12;
 
     /**
-     * The intent to refer
+     * Password for the p12 format
      */
-    public final String value;
+    public final String password;
 
-    public final String challenge;
+    /**
+     * PEM encoded certificate
+     */
+    public final byte[] certificate;
     
-    public Intent_Reference(String value) {
-        super(Outcome.OK_0000_Acknowledged);
-        if(value == null) throw new NullPointerException("Intent reference must be specified");
-        this.value = value;
-        this.challenge = null;
-    }
-
-    public Intent_Reference(String value, String challenge) {
-        super(Outcome.OK_0000_Acknowledged);
-        if(value == null) throw new NullPointerException("Intent reference must be specified");
-        this.value = value;
-        this.challenge = challenge;
+    /**
+     * PEM encoded private key
+     */
+    public final byte[] private_key;
+    
+    
+    public X509_Identity(Outcome response, byte[] p12, String password, byte[] certificate, byte[] private_key) {
+        super(response);
+        this.p12 = p12;
+        this.password = password;
+        this.certificate = certificate;
+        this.private_key = private_key;
     }
 
     /**
@@ -76,9 +84,14 @@ public class Intent_Reference extends API_Response{
      * The deserializer will override the final modifier and re-initialize the fields
      * with the proper values  
      */
-    public Intent_Reference(JsonObject object){
-        value = null;
-        challenge = null;
+    public X509_Identity(JsonObject object){
+        // initialize fields to null
+        this.p12 = null;
+        this.password = null;
+        this.certificate = null;
+        this.private_key = null;
+        
+        // call the restore mechanism
         restore_object(object);
     }
 }

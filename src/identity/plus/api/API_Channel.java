@@ -433,6 +433,15 @@ public class API_Channel {
         return ep + "/" + intent.value;
     }
 
+    public String intent_endpoint(Intent_Reference intent, String path){
+        String ep = endpoint.replaceAll("api", "signon") ;
+        ep = ep.substring(0,  ep.lastIndexOf('/'));
+        
+        if(path.length() > 0) path = path + "/";
+        
+        return ep + "/" + path + intent.value;
+    }
+
     public String profile_picture(){
         String ep = endpoint.replaceAll("api", "my") ;
         ep = ep.substring(0,  ep.lastIndexOf('/'));
