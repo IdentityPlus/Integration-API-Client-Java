@@ -160,7 +160,7 @@ public class API_Channel {
     public API_Channel(String endpoint, String key_store_location, String key_store_pass, String trust_store_location) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, KeyManagementException, UnrecoverableKeyException {
 
         KeyStore credentials = HTTPS_Utils.load_credentials(HTTPS_Utils.drain(new FileInputStream(key_store_location)), key_store_pass);
-        KeyStore trusted_authorities = HTTPS_Utils.load_trusted_authorities(HTTPS_Utils.drain(new FileInputStream(trust_store_location)));
+        KeyStore trusted_authorities = HTTPS_Utils.load_trusted_authorities(trust_store_location == null ? null : HTTPS_Utils.drain(new FileInputStream(trust_store_location)));
         
         this.endpoint = endpoint;
         this.certificate = (X509Certificate)credentials.getCertificate(Identity_Plus_Utils.API_CERT_ALIAS);
