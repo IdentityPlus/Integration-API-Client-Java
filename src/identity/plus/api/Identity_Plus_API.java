@@ -33,6 +33,7 @@
 package identity.plus.api;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -44,6 +45,8 @@ import java.util.Enumeration;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.json.Json;
+import javax.json.JsonReader;
 import javax.servlet.http.HttpServletRequest;
 
 import identity.plus.api.communication.API_Response;
@@ -154,7 +157,7 @@ public class Identity_Plus_API {
             if(!skip_legacy_call){
                 // try it the legacy way if not disabled
                 // if we find it in the session, get it from there
-                serial_number = (String)get_session_variable(SERIAL_NO_SESSION_KEY);
+                serial_number = get_session_variable(SERIAL_NO_SESSION_KEY);
 
                 // will go the legacy way only if this is a legacy redirect callback
                 if(serial_number == null && is_legacy_call()){
@@ -170,18 +173,23 @@ public class Identity_Plus_API {
         if(serial_number != null){
             // found the anonymous id
             // found the id, this means we can do device authentication
-            this.identity_profile = (Identity_Profile)get_session_variable(SERIAL_NO_SESSION_KEY + "/profile");
+            String cached_profile = get_session_variable(SERIAL_NO_SESSION_KEY + "/profile");
             
-            if(this.identity_profile == null) try{
-                    // the validation has not yet been done, let's do that
-                    API_Response idp_response = api_channel.get(new Identity_Inquiry(serial_number, null, Identity_Plus_Utils.client_IP_address(request)));
-                    update_cached_profile(idp_response);
+            if(cached_profile != null) {
+                JsonReader json_reader = Json.createReader(new StringReader(cached_profile));
+                this.identity_profile = new Identity_Profile(json_reader.readObject().getJsonObject("Identity-Profile"));
+                outcome = this.identity_profile.outcome;
+            }
+            else try {
+                // the validation has not yet been done, let's do that
+                API_Response idp_response = api_channel.get(new Identity_Inquiry(serial_number, null, Identity_Plus_Utils.client_IP_address(request)));
+                update_cached_profile(idp_response);
+                outcome = this.identity_profile.outcome;
             }
             catch(IOException e){
-                    this.outcome = Outcome.ER_1106_General_Identity_Plus_API_Problem;
-                    log(0, "Cannot make api call", e);
+                this.outcome = Outcome.ER_1106_General_Identity_Plus_API_Problem;
+                log(0, "Cannot make api call", e);
             }
-            else outcome = this.identity_profile.outcome;
         }
     }
     
@@ -199,7 +207,7 @@ public class Identity_Plus_API {
             // bind it to the session so that we don't have to issue another request on this session
 
             this.identity_profile = (Identity_Profile)idp_response;
-            set_session_variable(SERIAL_NO_SESSION_KEY + "/profile", this.identity_profile);
+            set_session_variable(SERIAL_NO_SESSION_KEY + "/profile", this.identity_profile.to_json());
         }
     }
 
@@ -353,15 +361,15 @@ public class Identity_Plus_API {
      * Default implementation for the session attribute recovery
      * override this method to store session attributes in a non standard way
      */
-    protected Object get_session_variable(String key) {
-        return http_request.getSession(true).getAttribute(key);
+    protected String get_session_variable(String key) {
+        return (String)http_request.getSession(true).getAttribute(key);
     }
     
     /**
      * Default implementation for the session attribute storing
      * override this method to store session attributes in a non standard way
      */
-    protected void set_session_variable(String key, Object value) {
+    protected void set_session_variable(String key, String value) {
        if(value == null) http_request.getSession().removeAttribute(key); 
        else http_request.getSession(true).setAttribute(key, value);
     }

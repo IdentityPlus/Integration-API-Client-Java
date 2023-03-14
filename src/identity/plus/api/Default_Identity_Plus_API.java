@@ -51,15 +51,15 @@ public class Default_Identity_Plus_API extends Identity_Plus_API {
      * Default implementation for the session attribute recovery
      */
     @Override
-    protected Object get_session_variable(String key) {
-        return http_request.getSession(true).getAttribute(key);
+    protected String get_session_variable(String key) {
+        return (String)http_request.getSession(true).getAttribute(key);
     }
     
     /**
      * Default implementation for the session attribute storing
      */
     @Override
-    protected void set_session_variable(String key, Object value) {
+    protected void set_session_variable(String key, String value) {
         http_request.getSession(true).setAttribute(key, value);
     }
 }
