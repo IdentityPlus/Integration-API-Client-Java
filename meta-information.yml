@@ -1,7 +1,15 @@
-dependencies:
-    projects:
-    third_party:
-        - "apache-commons-logging"
-        - "apache-http-client"
-        - "java-json-api"
-        - "java-servlet-api"
+runtime:
+    platform: "n/a"
+    
+build:
+    deployment:
+        mode: "library"
+
+    dependencies:
+        projects:
+        
+        third_party:
+            - "apache-commons-logging"
+            - "apache-http-client"
+            - "java-json-api"
+            - "java-servlet-api"
