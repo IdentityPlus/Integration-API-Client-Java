@@ -3,7 +3,7 @@ runtime:
     
 build:
     deployment:
-        mode: "library"
+        mode: "jar"
 
     dependencies:
         projects:
