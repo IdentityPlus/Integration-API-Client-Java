@@ -140,7 +140,9 @@ public class Identity_Plus_API {
         // do this every time, the user may come with a different device or somebody
         // may have hijacked the session
         if(request.isSecure()) get_id_from_certificate();
-        else {
+
+        // request was detected as secure but there is a reverse proxy in between
+        if(serial_number == null){
                 serial_number = request.getHeader("X-TLS-Client-Serial");
                 if(serial_number == null || serial_number.length() == 0)  log(3, "This is not a secure (SSL/TLS) connection. If you offloading TLS on a reverse proxy, please forward the client certificate serial number in the X-TLS-Client-Serial header", null);
                 else serial_number =  new BigInteger(serial_number, 16).toString();
