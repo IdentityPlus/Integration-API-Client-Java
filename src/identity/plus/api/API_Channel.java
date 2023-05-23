@@ -442,13 +442,6 @@ public class API_Channel {
         return ep + "/" + path + intent.value;
     }
 
-    public String profile_picture(){
-        String ep = endpoint.replaceAll("api", "my") ;
-        ep = ep.substring(0,  ep.lastIndexOf('/'));
-        
-        return ep + "/widgets/profile-picture";
-    }
-    
     public API_Response issue_service_identity(boolean force) throws IOException{
             return issue_service_identity(null, force);
     }
