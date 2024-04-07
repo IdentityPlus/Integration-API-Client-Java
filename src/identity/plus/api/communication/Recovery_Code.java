@@ -37,7 +37,7 @@ import javax.json.JsonObject;
 import identity.plus.api.Identity_Plus_Utils;
 
 /**
- * The ID of an out of band authorization that can be used to issue a device identity
+ * The ID of an out of band authorization that can be used to issue an mTLS ID
  * 
  * @author Stefan Harsan Farr
  */
