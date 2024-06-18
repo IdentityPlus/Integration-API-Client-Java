@@ -72,9 +72,24 @@ public class Identity_Inquiry extends API_Request{
      */
     public final String ip_address;
 
+    /**
+     * Explicitely inquire for a specific service. Role based relationship will apply beteeen this service and the inquiring service
+     */
+    public final String service;
+
     public Identity_Inquiry(String serial_number, String anonymous_id, String ip_address) {
         if(anonymous_id == null && serial_number == null) throw new NullPointerException("either certificate_uid or serial number must be specified");
 
+        this.service = null;
+        this.ip_address = ip_address;
+        this.anonymous_id = anonymous_id;
+        this.serial_number = serial_number;
+    }
+
+    public Identity_Inquiry(String service, String serial_number, String anonymous_id, String ip_address) {
+        if(anonymous_id == null && serial_number == null) throw new NullPointerException("either certificate_uid or serial number must be specified");
+
+        this.service = service;
         this.ip_address = ip_address;
         this.anonymous_id = anonymous_id;
         this.serial_number = serial_number;
@@ -86,6 +101,7 @@ public class Identity_Inquiry extends API_Request{
      * with the proper values  
      */
     public Identity_Inquiry(JsonObject object){
+        service = null;
         anonymous_id = null;
         ip_address = null;
         serial_number = null;
