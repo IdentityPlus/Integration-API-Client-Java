@@ -532,7 +532,7 @@ public class Identity_Plus_API {
      * Change the user secret. Please refer to best practices with this
      * Formats the request, calls it via the api channel and updates the cached user profile
      * 
-     * @param secret
+     * @param token
      * @throws IOException
      */
     public API_Response unlock(String local_user_name) throws IOException{
@@ -548,7 +548,7 @@ public class Identity_Plus_API {
      * Formats the request, calls it via the api channel and updates the cached user profile
      * 
      * @since v2
-     * @param secret
+     * @param token
      * @throws IOException
      */
     public API_Response create_intent(Intent_Type type, String local_user_name, String name, String email_address, String phone_number, String return_url, boolean strict_massl) throws IOException{
