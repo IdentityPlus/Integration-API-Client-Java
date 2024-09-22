@@ -168,7 +168,6 @@ public class API_Channel {
         this.tls_context = HTTPS_Utils.prepare_tls_context(credentials, key_store_pass != null ? key_store_pass.toCharArray() : new char[]{}, trusted_authorities);
     }
 
-
     /**
      * Performs a get request for the Identity_Enquiry object
      * 
