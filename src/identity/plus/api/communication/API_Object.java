@@ -45,6 +45,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.TreeMap;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -59,44 +60,46 @@ import identity.plus.api.Identity_Plus_Utils;
 
 public abstract class API_Object implements Serializable{
     private static final long serialVersionUID = 1L;
+    public final TreeMap<String, String> custom_fields = new TreeMap<>();
+
+    public void custom(String name, String value){
+        custom_fields.put(name, value);
+    }
 
     protected final void restore_object(JsonObject object){
-        try{
-            for(Field f : getClass().getFields()){
-                f.setAccessible(true);
-                int modifiers = f.getModifiers();
-                
-                // skip the static fields
-                if(Modifier.isStatic(modifiers)) continue;
-                                
-                String name = f.getName().replace('_', '-');
-                
-                if(!object.containsKey(name)) continue;
-                else if(List.class.isAssignableFrom(f.getType())){
-                    JsonArray tss = object.getJsonArray(name);
-                    ArrayList<String> tss_list = new ArrayList<String>();
-                    for(int i = 0; i < tss.size(); i++) tss_list.add(tss.getString(i));
-                    f.set(this, Collections.unmodifiableList(tss_list));
-                }
-                else{
-                    JsonValue value = object.get(name);
-
-                    String string_value = null;
-                    if(value.getValueType() == ValueType.TRUE) string_value = "true";
-                    else if(value.getValueType() == ValueType.FALSE) string_value = "false";
-                    else if(value.getValueType() == ValueType.NULL) string_value = null;
-                    else if(value.getValueType() == ValueType.STRING) string_value = object.getString(name);
-                    else string_value = value.toString();
-                    
-                    if(f.getType() == String.class)  f.set(this, string_value);
-                    else if(f.getType() == Date.class) f.set(this, new Date(Long.parseLong(string_value)));
-                    else if(f.getType() == BigInteger.class) f.set(this, new BigInteger(string_value == null || string_value.length() == 0 ? "0" : string_value));
-                    else if(f.getType() == BigDecimal.class) f.set(this, new BigDecimal(string_value == null || string_value.length() == 0 ? "0" : string_value));
-                    else if(f.getType() == Boolean.class) f.set(this, Boolean.valueOf(string_value == null || string_value.length() == 0 ? "false" : string_value));
-                    else if(f.getType() == byte[].class) f.set(this, string_value == null ? null : Base64.getDecoder().decode(string_value));
-                    else if(Enum.class.isAssignableFrom(f.getType())) f.set(this, Enum.valueOf(f.getType().asSubclass(Enum.class), string_value.replace(' ', '_').replace('-', '_')));
-                }
+        for(String key : object.keySet()) try {
+            String field_name = key.replace('-', '_');
+            Field f = getClass().getField(field_name);
+            f.setAccessible(true);
+            
+            if(List.class.isAssignableFrom(f.getType())){
+                JsonArray tss = object.getJsonArray(key);
+                ArrayList<String> tss_list = new ArrayList<String>();
+                for(int i = 0; i < tss.size(); i++) tss_list.add(tss.getString(i));
+                f.set(this, Collections.unmodifiableList(tss_list));
             }
+            else{
+                JsonValue value = object.get(key);
+
+                String string_value = null;
+                if(value.getValueType() == ValueType.TRUE) string_value = "true";
+                else if(value.getValueType() == ValueType.FALSE) string_value = "false";
+                else if(value.getValueType() == ValueType.NULL) string_value = null;
+                else if(value.getValueType() == ValueType.STRING) string_value = object.getString(key);
+                else string_value = value.toString();
+                
+                if(f.getType() == String.class)  f.set(this, string_value);
+                else if(f.getType() == Date.class) f.set(this, new Date(Long.parseLong(string_value)));
+                else if(f.getType() == BigInteger.class) f.set(this, new BigInteger(string_value == null || string_value.length() == 0 ? "0" : string_value));
+                else if(f.getType() == BigDecimal.class) f.set(this, new BigDecimal(string_value == null || string_value.length() == 0 ? "0" : string_value));
+                else if(f.getType() == Boolean.class) f.set(this, Boolean.valueOf(string_value == null || string_value.length() == 0 ? "false" : string_value));
+                else if(f.getType() == byte[].class) f.set(this, string_value == null ? null : Base64.getDecoder().decode(string_value));
+                else if(Enum.class.isAssignableFrom(f.getType())) f.set(this, Enum.valueOf(f.getType().asSubclass(Enum.class), string_value.replace(' ', '_').replace('-', '_')));
+            }
+            
+        }
+        catch(NoSuchFieldException nsf) {
+            custom_fields.put(key, object.getString(key));
         }
         catch(Exception e){
             e.printStackTrace();
@@ -107,7 +110,7 @@ public abstract class API_Object implements Serializable{
         JsonObjectBuilder b = Json.createObjectBuilder();
         
         try{
-            for(Field f : getClass().getFields()){
+            for(Field f : getClass().getFields()) if(!f.getName().equals("custom_fields")){
                 // skip the static fields
                 if(Modifier.isStatic(f.getModifiers())) continue;
 
@@ -133,7 +136,7 @@ public abstract class API_Object implements Serializable{
                 }
                 else if(val instanceof Enum) b.add(name, ((Enum<?>)val).name().replace('_', ' '));
                 else if(val instanceof List){
-                        if(((List)val).size() > 0) {
+                        if(((List<?>)val).size() > 0) {
                                 JsonArrayBuilder array_b = Json.createArrayBuilder();
                                 for(Object ts : (List<?>)val) array_b.add(ts.toString());
                                 
@@ -142,6 +145,8 @@ public abstract class API_Object implements Serializable{
                 }
                 else throw new RuntimeException("Unsupported type: " + val.getClass() + ", for field: " + name);
             }
+
+            for(Object key : custom_fields.keySet()) b.add(key.toString(), custom_fields.get(key));
         }
         catch(Exception e){
             e.printStackTrace();

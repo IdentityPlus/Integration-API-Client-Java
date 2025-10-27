@@ -70,10 +70,12 @@ public class Identity_Profile extends API_Response{
      * The local_org_name is an organizational relationship reference (the domain name of the service, 
      * or the LDAP reference or an organizational email address anonymous id belongs to, if any).
      * 
-     * In case no organizational relationship was bound to the identity + account (ex an organizational relationship as opposed to service relationship)
-     *  by the requesting API Client this field will be empty.
+     * In case no organizational relationship was bound to the identity Plus account (ex an service relationship as opposed to organizational relationship)
+     * these fields will be empty.
      */
     public final String organizational_reference;
+    public final String organizational_name;
+    public final String organizational_email;
 
     /**
      * A list of web sites which the user chose as trust sponsors. An empty list can mean
@@ -142,14 +144,34 @@ public class Identity_Profile extends API_Response{
      */
     public final List<String> community_guarantees;
 
-    public Identity_Profile(Outcome response, String local_user_name, String local_org_name, String[] service_roles, String user_secret, String[] trust_sponsors, BigInteger sites_frequented, BigInteger average_identity_age, BigInteger max_identity_age, BigDecimal trust_score, BigInteger local_trust, BigInteger local_intrusions, BigInteger authorizing_certificate, String[] your_guarantees, String[] community_guarantees) {
+    public Identity_Profile(
+                    Outcome response, 
+                    String local_user_name, 
+                    String local_org_id, 
+                    String local_org_name, 
+                    String local_org_email, 
+                    String[] service_roles, 
+                    String user_secret, 
+                    String[] trust_sponsors, 
+                    BigInteger sites_frequented, 
+                    BigInteger average_identity_age, 
+                    BigInteger max_identity_age, 
+                    BigDecimal trust_score, 
+                    BigInteger local_trust, 
+                    BigInteger local_intrusions, 
+                    BigInteger authorizing_certificate, 
+                    String[] your_guarantees, 
+                    String[] community_guarantees) {
+        
         super(response);
         
         if(trust_sponsors == null) throw new NullPointerException("Neither value can be null");
         
         this.local_user_name = local_user_name;
         this.local_user_id = local_user_name;
-        this.organizational_reference = local_org_name;
+        this.organizational_reference = local_org_id;
+        this.organizational_name = local_org_name;
+        this.organizational_email = local_org_email;
         this.user_secret = user_secret;
         this.trust_sponsors = Collections.unmodifiableList(Arrays.asList(trust_sponsors));
         this.service_roles = Collections.unmodifiableList(Arrays.asList(service_roles));
@@ -174,6 +196,8 @@ public class Identity_Profile extends API_Response{
         this.local_user_name = null;
         this.local_user_id = null;
         this.organizational_reference = null;
+        this.organizational_name = null;
+        this.organizational_email = null;
         this.service_roles = null;
         this.user_secret = null;
         this.trust_sponsors = null;
