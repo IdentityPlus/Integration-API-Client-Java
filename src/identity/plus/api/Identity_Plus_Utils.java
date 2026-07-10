@@ -84,6 +84,7 @@ public class Identity_Plus_Utils {
         private static final String RANDOM_LETTER_POOL = "ABCDEFGHJKLMNOPQRSTUVXYZabcdefghijkmnopqrstuvxyz";
         private static final String RANDOM_TEXT_POOL = "0123456789ABCDEFGHJKLMNOPQRSTUVXYZabcdefghijkmnopqrstuvxyz~!@#$%^&*()_+=[]{}<>?";
         private static final String RANDOM_NUM_POOL = "0123456789";
+        private static final String LC_LETTERS_POOL = "abcdefghijklmnopqrstuvwxzy";
         
         /**
          * Extracts distinguished name from an X500Principal's name.
@@ -124,6 +125,12 @@ public class Identity_Plus_Utils {
                 }
                 
                 return ans;
+        }
+
+        public static String random_reference(int length){
+            StringBuilder p = new StringBuilder();
+            for(int i = 0; i < length; ++i) p.append(LC_LETTERS_POOL.charAt(RANDOM.nextInt(LC_LETTERS_POOL.length())));
+            return p.toString();
         }
         
         public static SecretKey random_symmetric_key() throws NoSuchAlgorithmException{
