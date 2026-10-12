@@ -54,21 +54,15 @@ public class Intent_Reference extends API_Response{
      * The intent to refer
      */
     public final String value;
-
+    public final String subdomain;
     public final String challenge;
     
-    public Intent_Reference(String value) {
+    public Intent_Reference(String value, String challenge_or_subdomain) {
         super(Outcome.OK_0000_Acknowledged);
         if(value == null) throw new NullPointerException("Intent reference must be specified");
         this.value = value;
-        this.challenge = null;
-    }
-
-    public Intent_Reference(String value, String challenge) {
-        super(Outcome.OK_0000_Acknowledged);
-        if(value == null) throw new NullPointerException("Intent reference must be specified");
-        this.value = value;
-        this.challenge = challenge;
+        this.challenge = challenge_or_subdomain;
+        this.subdomain = challenge_or_subdomain;
     }
 
     /**
@@ -79,6 +73,7 @@ public class Intent_Reference extends API_Response{
     public Intent_Reference(JsonObject object){
         value = null;
         challenge = null;
+        subdomain = null;
         restore_object(object);
     }
 }

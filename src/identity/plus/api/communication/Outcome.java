@@ -79,7 +79,7 @@ public enum Outcome {
     ER_0012_Expecting_Service_Agent("ER_0012", None),
 
     ER_1100_No_Identity_Plus_API_certificate_presented("ER_1100", Fix_API_Problem),
-    ER_1101_Unknown_Identity_Plus_API_certificate("ER_1101", Evasive_Maneuver),
+    ER_1101_Unknown_Identity_Plus_API_certificate("ER_1101", Redirect),
     ER_1102_Expired_Identity_Plus_API_certificate("ER_1102", Fix_API_Problem),
     ER_1103_Revoked_Identity_Plus_API_certificate("ER_1103", Fix_API_Problem),
     ER_1104_Number_of_connectable_identities_exceeded("ER_1104", Fix_API_Problem),

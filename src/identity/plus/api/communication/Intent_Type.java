@@ -47,7 +47,7 @@ public enum Intent_Type {
     discover, 
 
     /* request this device to be certified. Connect device or sign up for identity plus if necessary. The operation will be performed under the brand of the domain */
-    request, 
+    enroll, 
 
     /* request this device to be certified and bind local user to it. Connect device or sign up for identity plus if necessary. The operation will be performed under the brand of the domain */
     bind,
@@ -56,5 +56,8 @@ public enum Intent_Type {
     assume_ownership,
 
     /* intention to establish relationship with another person */
-    befriend;
+    befriend,
+
+    /* intention to establish relationship with an organization*/
+    contract;
 }

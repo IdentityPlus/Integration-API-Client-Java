@@ -426,7 +426,9 @@ public class API_Channel {
     }
     
     public String intent_endpoint(Intent_Reference intent){
-        String ep = endpoint.replaceAll("api", "signon") ;
+        String subdomain = intent.subdomain;
+        if(subdomain == null) subdomain = "selfauthority";
+        String ep = endpoint.replaceAll("api", subdomain) ;
         ep = ep.substring(0,  ep.lastIndexOf('/'));
         
         return ep + "/" + intent.value;

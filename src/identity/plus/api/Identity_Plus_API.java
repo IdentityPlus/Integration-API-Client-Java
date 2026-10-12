@@ -186,7 +186,6 @@ public class Identity_Plus_API {
                 // the validation has not yet been done, let's do that
                 API_Response idp_response = api_channel.get(new Identity_Inquiry(serial_number, null, Identity_Plus_Utils.client_IP_address(request)));
                 update_cached_profile(idp_response);
-                outcome = this.identity_profile.outcome;
             }
             catch(IOException e){
                 this.outcome = Outcome.ER_1106_General_Identity_Plus_API_Problem;
