@@ -39,6 +39,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.Random;
 
 import javax.crypto.BadPaddingException;
@@ -132,7 +133,26 @@ public class Identity_Plus_Utils {
             for(int i = 0; i < length; ++i) p.append(LC_LETTERS_POOL.charAt(RANDOM.nextInt(LC_LETTERS_POOL.length())));
             return p.toString();
         }
+
+        public static String random_token(int len) {
+            final byte[] bytes = new byte[len];
+            RANDOM.nextBytes(bytes);
+            return b64u(bytes);
+        }
+
+        public static String b64u(byte[] bytes) {
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        }
         
+        public static byte[] sha256(byte[] data) {
+            try {
+                return MessageDigest.getInstance("SHA-256").digest(data);
+            }
+            catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
         public static SecretKey random_symmetric_key() throws NoSuchAlgorithmException{
                 KeyGenerator keyGen = KeyGenerator.getInstance("AES");
                 keyGen.init(256);
