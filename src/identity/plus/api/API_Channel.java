@@ -405,7 +405,7 @@ public class API_Channel {
             byte[] retrival_bytes = extraction.to_json().getBytes("UTF-8");
             if(retrival_bytes.length > 245) throw new RuntimeException("Return URL is too long. Instead of adding a long query, you can store the query in session variable and append pass the variable's id to the request.");
             
-            String endpoint = this.endpoint.replace("api.", "signon.");
+            String endpoint = this.endpoint.replace("api.", "selfauthority.");
             endpoint = endpoint.substring(0,  endpoint.lastIndexOf('/'));
             
             StringBuilder sb = new StringBuilder(endpoint + "?api=");
@@ -435,7 +435,7 @@ public class API_Channel {
     }
 
     public String intent_endpoint(Intent_Reference intent, String path){
-        String ep = endpoint.replaceAll("api", "signon") ;
+        String ep = endpoint.replaceAll("api", "selfauthority") ;
         ep = ep.substring(0,  ep.lastIndexOf('/'));
         
         if(path.length() > 0) path = path + "/";
