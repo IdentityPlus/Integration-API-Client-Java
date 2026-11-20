@@ -32,66 +32,59 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+import java.util.Objects;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
 
 /**
  * The Redirect_Request is part of the Legacy HTTP call assembly.
- * This request is sent URL encoded as part of the redirect when the the 
- * identity + service is used to read the client certificate from the user browser.  
+ * This request is sent URL encoded as part of the redirect when the identity + service
+ * is used to read the client certificate from the user's browser.
  *
- * This Object is only needed by implementations that use the identity + service over
- * http or do not have access to reading the SSL Client certificate for other reasons
- * 
- * This request object must always come encrypted with the API Client's private key
- * 
+ * This object is only needed by implementations that use the identity + service over
+ * http, or that cannot read the SSL client certificate for other reasons.
+ *
+ * This request object must always be encrypted with the API Client's private key.
+ *
+ * @param return_url  the URL to return to after the certificate has been extracted (or not);
+ *                    the response comes encrypted in the URL query
+ * @param salt        random text with no meaning in the identity + process; it only exists so
+ *                    that requests with the same values encrypt to different outputs
+ * @param custom      additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Redirect_Request extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Redirect_Request(
+        String return_url,
+        String salt,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Redirect_Request.class);
-    
-    /**
-     * The URL to return to when with a response after the certificate is
-     * extracted, or not. The response will come encrypted in the url query
-     */
-    public final String return_url;
 
-    /**
-     * This is a random sequence of text which is not needed as part of the identity + 
-     * processes and can be discarded.
-     * 
-     * It's sole purpose is to force different encryption outputs for responses with the
-     * same value. We use 16 characters, but normally even one character would suffice
-     * to change the output of the encrypted bytes. 
-     */
-    public final String salt;
-    
-    public Redirect_Request(String return_url){
-        if(return_url == null) throw new NullPointerException("return_url cannot be null");
-        
-        this.return_url = return_url;
-        this.salt = Identity_Plus_Utils.random_text(16);
+    public Redirect_Request {
+        custom = API_Object.custom_of(custom);
     }
 
     /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
+     * Creates a new Redirect_Request with a freshly generated 16 character salt.
      */
-    public Redirect_Request(JsonObject object){
-        this.return_url = null;
-        this.salt = null;
-        
-        restore_object(object);
+    public Redirect_Request(String return_url) {
+        this(Objects.requireNonNull(return_url, "return_url cannot be null"),
+             Identity_Plus_Utils.random_text(16),
+             null);
     }
-    
-    public static void main(String[] args) {
-        System.out.println(new Redirect_Request("https://www.google.com").to_json());
+
+    public static Redirect_Request from_json(JsonObject object) {
+        return Json_Codec.decode(Redirect_Request.class, object);
     }
 }

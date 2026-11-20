@@ -32,52 +32,54 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+import java.util.Objects;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
 
 /**
  * The Device Authorization Request creates an authorization token which allows the user to jump
- * directly to the device authorization step. It essentially provides sufficient proof of Identity
- * for Identityplus to not trigger more verification steps. In other words, it allows a third party
- * to provide proof of identity such that their user would be able to recover their identityplus
- * account should they be left with no certified devices and all access to their account or are left.
- *  
+ * directly to the device authorization step. It provides sufficient proof of identity for
+ * identity + to skip further verification steps. In other words, it allows a third party to vouch
+ * for the identity of its user, so that the user can recover their identity + account if they are
+ * left with no certified devices and no other access to their account.
+ *
  * There are prerequisites for this action to be successful:
- * - A service can only provide authorization requests to their own users
- * - These users must have their identityplus accounts bound with their local service accounts
- * - The user must authorize the service to perform such an action in their identityplus profile
- * - Only organizations that can provide either KYC-d or in-person identity assurance with their clients,
- *   can perform this operation
- * 
+ * - A service can only provide authorization requests for its own users
+ * - These users must have their identity + accounts bound to their local service accounts
+ * - The user must authorize the service to perform this action in their identity + profile
+ * - Only organizations that can provide either KYC or in-person identity assurance for their
+ *   clients can perform this operation
+ *
+ * @param local_user_name  the local user name the identity + account is bound to
+ * @param custom           additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Device_Authorization_Request extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Device_Authorization_Request(
+        String local_user_name,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Device_Authorization_Request.class);
 
-    /**
-     * The anonymous id to refer. This is only available when the Identity + account is not bound to local user
-     */
-    public final String local_user_name;
-    
-    public Device_Authorization_Request(String local_user_name) {
-        if(local_user_name == null) throw new NullPointerException("Local user name must be specified");
-        this.local_user_name = local_user_name;
+    public Device_Authorization_Request {
+        custom = API_Object.custom_of(custom);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Device_Authorization_Request(JsonObject object){
-        this.local_user_name = null;
-        
-        restore_object(object);
+    public Device_Authorization_Request(String local_user_name) {
+        this(Objects.requireNonNull(local_user_name, "Local user name must be specified"), null);
+    }
+
+    public static Device_Authorization_Request from_json(JsonObject object) {
+        return Json_Codec.decode(Device_Authorization_Request.class, object);
     }
 }

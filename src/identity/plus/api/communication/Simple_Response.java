@@ -32,44 +32,49 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Response;
+import identity.plus.api.json.Json_Codec;
 
 /**
- * It is a non-abstract representative of the API Response, the simplest case
- * of response in which we only have an outcome response.
- * 
+ * The simplest response: an outcome, optionally with a message.
+ *
+ * @param outcome  the outcome of the call
+ * @param message  optional human-readable detail about the outcome; may be null
+ * @param custom   unrecognized fields, preserved for round-trips
+ *
  * @author Stefan Harsan Farr
  */
-public class Simple_Response extends API_Response{
-    private static final long serialVersionUID = 1L;
-    
+public record Simple_Response(
+        Outcome outcome,
+        String message,
+        Map<String, String> custom
+) implements API_Response {
+
     /**
      * The JSON Name of this response object as returned by the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Simple_Response.class);
 
-    public final String message;
-    
-    public Simple_Response(Outcome response) {
-        super(response);
-        this.message = null;
+    public Simple_Response {
+        custom = custom == null ? Map.of() : Collections.unmodifiableMap(new TreeMap<>(custom));
     }
 
-    public Simple_Response(Outcome response, String message) {
-        super(response);
-        this.message = message;
+    public Simple_Response(Outcome outcome) {
+        this(outcome, null, null);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Simple_Response(JsonObject object){
-        this.message = null;
-        
-        restore_object(object);
+    public Simple_Response(Outcome outcome, String message) {
+        this(outcome, message, null);
+    }
+
+    public static Simple_Response from_json(JsonObject object) {
+        return Json_Codec.decode(Simple_Response.class, object);
     }
 }

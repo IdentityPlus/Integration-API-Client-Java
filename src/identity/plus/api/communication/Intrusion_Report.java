@@ -33,89 +33,77 @@
 package identity.plus.api.communication;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
 import identity.plus.api.Object_Of_Intrusion;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
 
 /**
- * The Trust Intrusion_Report deposits a certain intrusion event with an identity + certificate
- * The local user name is not necessary for this operation, an intrusion can be reported on any
- * incoming offending certificate. 
- * 
+ * The Intrusion_Report deposits an intrusion event against an identity + certificate.
+ * The local user name is not needed for this operation: an intrusion can be reported on any
+ * incoming offending certificate.
+ *
+ * @param intruding_certificate_uid  the identifier of the offending identity + certificate
+ * @param severity                   the severity of the intrusion; see {@link Object_Of_Intrusion}
+ * @param message                    a message delivered to the owner of the identity associated
+ *                                   with the offending certificate
+ * @param intruder_ip_address        the IP address the request was made from
+ * @param intruded_url               the URL accessed during the intrusion
+ * @param intruding_request_headers  HTTP headers of the intruding request; never null
+ * @param additional_information     free-form additional information
+ * @param custom                     additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Intrusion_Report extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Intrusion_Report(
+        String intruding_certificate_uid,
+        Object_Of_Intrusion severity,
+        String message,
+        String intruder_ip_address,
+        String intruded_url,
+        List<String> intruding_request_headers,
+        String additional_information,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Intrusion_Report.class);
 
-    /**
-     * The anonymous id extracted from the identity + certificate of the visitor.
-     */
-    public final String intruding_certificate_uid;
-
-    /**
-     * The severity of the intrusion, see severity for details
-     */
-    public final Object_Of_Intrusion severity;
-
-    /**
-     * A message which will be delivered to the person who owns the identity associated with the
-     * offending certificate
-     */
-    public final String message;
-    
-    /**
-     * IP address where the request was made from
-     */
-    public final String intruder_ip_address;
-    
-    /**
-     * The url that was accessed during the intrusion
-     */
-    public final String intruded_url;
-    
-    /**
-     * HTTP headers from the intrusion requests
-     */
-    public final List<String> intruding_request_headers;
-    
-    /**
-     * Additional information.
-     */
-    public final String additional_information;
-    
-    public Intrusion_Report(String offending_certificate_uid, Object_Of_Intrusion severity, String message, String request_ip_address, String visited_uri, List<String> request_headers, String additional_information) {
-        if(offending_certificate_uid == null || request_ip_address == null) throw new NullPointerException("Offending certificate and the IP address must be included in the report");
-
-        this.intruding_certificate_uid = offending_certificate_uid;
-        this.severity = severity;
-        this.message = message;
-        this.intruder_ip_address = request_ip_address;
-        this.intruded_url = visited_uri;
-        this.intruding_request_headers = request_headers;
-        this.additional_information = additional_information;
+    public Intrusion_Report {
+        intruding_request_headers = intruding_request_headers == null ? List.of() : List.copyOf(intruding_request_headers);
+        custom = API_Object.custom_of(custom);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Intrusion_Report(JsonObject object){
-        this.intruding_certificate_uid = null;
-        this.severity = null;
-        this.message = null;
-        this.intruder_ip_address = null;
-        this.intruded_url = null;
-        this.intruding_request_headers = null;
-        this.additional_information = null;
-        
-        restore_object(object);
+    public Intrusion_Report(String offending_certificate_uid, Object_Of_Intrusion severity, String message,
+                            String request_ip_address, String visited_uri, List<String> request_headers,
+                            String additional_information) {
+        this(require(offending_certificate_uid, request_ip_address), severity, message, request_ip_address,
+             visited_uri, request_headers, additional_information, null);
+    }
+
+    public static Intrusion_Report from_json(JsonObject object) {
+        return Json_Codec.decode(Intrusion_Report.class, object);
+    }
+
+    @Override
+    public String toString() {
+        return "Intrusion_Report[certificate=" + intruding_certificate_uid
+             + ", severity=" + severity
+             + ", ip=" + intruder_ip_address
+             + ", url=" + intruded_url
+             + ", headers=" + intruding_request_headers.size() + "]";
+    }
+
+    private static String require(String certificate_uid, String ip_address) {
+        if (certificate_uid == null || ip_address == null)
+            throw new NullPointerException("Offending certificate and the IP address must be included in the report");
+        return certificate_uid;
     }
 }

@@ -32,43 +32,53 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Response;
+import identity.plus.api.json.Json_Codec;
+import identity.plus.api.json.Secrets;
 
 /**
- * The ID of an out of band authorization that can be used to issue an mTLS ID
- * 
+ * The ID of an out of band authorization that can be used to issue an mTLS ID.
+ *
+ * The value is a credential. {@link #toString()} redacts it.
+ *
+ * @param outcome  the outcome of the call
+ * @param value    the recovery code
+ * @param custom   unrecognized fields, preserved for round-trips
+ *
  * @author Stefan Harsan Farr
  */
-public class Recovery_Code extends API_Response{
-    private static final long serialVersionUID = 1L;
-    
+public record Recovery_Code(
+        Outcome outcome,
+        String value,
+        Map<String, String> custom
+) implements API_Response {
+
     /**
      * The JSON Name of this response object as returned by the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Recovery_Code.class);
-   
-    /**
-     * The reference number value
-     */
-    public final String value;
-    
-    public Recovery_Code(Outcome response, String value) {
-        super(response);
-        this.value = value;
+
+    public Recovery_Code {
+        custom = custom == null ? Map.of() : Collections.unmodifiableMap(new TreeMap<>(custom));
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Recovery_Code(JsonObject object){
-        // initialize fields to null
-        this.value = null;
-        
-        // call the restore mechanism
-        restore_object(object);
+    public Recovery_Code(Outcome outcome, String value) {
+        this(outcome, value, null);
+    }
+
+    public static Recovery_Code from_json(JsonObject object) {
+        return Json_Codec.decode(Recovery_Code.class, object);
+    }
+
+    @Override
+    public String toString() {
+        return "Recovery_Code[outcome=" + outcome + ", value=" + Secrets.redacted(value) + "]";
     }
 }

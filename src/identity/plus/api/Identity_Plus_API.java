@@ -49,7 +49,6 @@ import javax.json.Json;
 import javax.json.JsonReader;
 import javax.servlet.http.HttpServletRequest;
 
-import identity.plus.api.communication.API_Response;
 import identity.plus.api.communication.Anonymous_ID;
 import identity.plus.api.communication.Identity_Inquiry;
 import identity.plus.api.communication.Identity_Profile;
@@ -64,6 +63,7 @@ import identity.plus.api.communication.Personal_Data_Disclosure_Request;
 import identity.plus.api.communication.Trust;
 import identity.plus.api.communication.Unlock_Request;
 import identity.plus.api.communication.User_Secret;
+import identity.plus.api.json.API_Response;
 /**
  * The Identity + API wrapper.
  * 
@@ -179,8 +179,8 @@ public class Identity_Plus_API {
             
             if(cached_profile != null) {
                 JsonReader json_reader = Json.createReader(new StringReader(cached_profile));
-                this.identity_profile = new Identity_Profile(json_reader.readObject().getJsonObject("Identity-Profile"));
-                outcome = this.identity_profile.outcome;
+                this.identity_profile = Identity_Profile.from_json(json_reader.readObject().getJsonObject("Identity-Profile"));
+                outcome = this.identity_profile.outcome();
             }
             else try {
                 // the validation has not yet been done, let's do that
@@ -201,7 +201,7 @@ public class Identity_Plus_API {
      * @param idp_response
      */
     private void update_cached_profile(API_Response idp_response){
-        this.outcome = idp_response.outcome;
+        this.outcome = idp_response.outcome();
 
         if(idp_response instanceof Identity_Profile){
             // we have an identity status that is normal,
@@ -289,10 +289,10 @@ public class Identity_Plus_API {
             
             API_Response resp = API_Channel.decode_response(decrypted_response);
 
-            this.outcome = resp.outcome;
+            this.outcome = resp.outcome();
 
             if(resp instanceof Anonymous_ID){
-                serial_number = ((Anonymous_ID)resp).serial_number;
+                serial_number = ((Anonymous_ID)resp).serial_number();
 
                 // this means we got the ID the legacy http way with a redirect,
                 // to make sure no redirections happen at each request, let's cache it in the session
@@ -520,8 +520,8 @@ public class Identity_Plus_API {
      * @throws IOException
      */
     public void change_secret(String secret) throws IOException{
-        if(identity_profile.local_user_name != null){
-            API_Response response = api_channel.put(new User_Secret(identity_profile.local_user_name, secret));
+        if(identity_profile.local_user_name() != null){
+            API_Response response = api_channel.put(new User_Secret(identity_profile.local_user_name(), secret));
             update_cached_profile(response);
         }
         else outcome = Outcome.ER_0005_Subject_user_name_was_never_associated;
@@ -537,7 +537,7 @@ public class Identity_Plus_API {
     public API_Response unlock(String local_user_name) throws IOException{
             API_Response response = api_channel.put(new Unlock_Request(local_user_name));
             
-            this.outcome = response.outcome;
+            this.outcome = response.outcome();
             
             return response;
     }
@@ -568,7 +568,7 @@ public class Identity_Plus_API {
      */
     public API_Response disclose_personal_data(String email_anchor, String phone_number_anchor, String pii_type, String value, long sample_count) throws IOException{
             return api_channel.put(new Personal_Data_Disclosure_Request(
-                                                    identity_profile.local_user_name, 
+                                                    identity_profile.local_user_name(), 
                                                     email_anchor != null ? Identity_Plus_Utils.compute_sha_512(email_anchor.getBytes()) : null,
                                                     phone_number_anchor != null ? Identity_Plus_Utils.compute_sha_512(phone_number_anchor.getBytes()) : null,
                                                     pii_type, 
@@ -587,7 +587,7 @@ public class Identity_Plus_API {
      */
     public API_Response delete_personal_data(String email_anchor, String phone_number_anchor, String pii_type, String value) throws IOException{
             return api_channel.put(new Personal_Data_Disclosure_Request(
-                                                    identity_profile.local_user_name, 
+                                                    identity_profile.local_user_name(), 
                                                     email_anchor != null ? Identity_Plus_Utils.compute_sha_512(email_anchor.getBytes()) : null,
                                                     phone_number_anchor != null ? Identity_Plus_Utils.compute_sha_512(phone_number_anchor.getBytes()) : null,
                                                     pii_type, 
@@ -609,8 +609,8 @@ public class Identity_Plus_API {
      * @throws IOException
      */
     public void put_trust(Object_Of_Trust trust_type) throws IOException{
-            if(identity_profile.local_user_name != null){
-                    API_Response response = api_channel.put(new Trust(identity_profile.local_user_name, serial_number, null, trust_type));
+            if(identity_profile.local_user_name() != null){
+                    API_Response response = api_channel.put(new Trust(identity_profile.local_user_name(), serial_number, null, trust_type));
                     update_cached_profile(response);
             }
             else outcome = Outcome.ER_0005_Subject_user_name_was_never_associated;
@@ -622,8 +622,8 @@ public class Identity_Plus_API {
      * @throws IOException
      */
     public void disconnect_local_user() throws IOException{
-        if(identity_profile.local_user_name != null){
-                disconnect_local_user(identity_profile.local_user_name);
+        if(identity_profile.local_user_name() != null){
+                disconnect_local_user(identity_profile.local_user_name());
         }
         else outcome = Outcome.ER_0005_Subject_user_name_was_never_associated;
     }

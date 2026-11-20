@@ -32,51 +32,59 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+import java.util.Objects;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
+import identity.plus.api.json.Secrets;
 
 /**
  * The User_Secret request deposits a secret string associated with the user within
- * the context of the client that makes the request. This secret will only be available to the 
- * client who deposited.  
- * 
+ * the context of the client that makes the request. The secret is only available to the
+ * client that deposited it.
+ *
+ * The secret is a credential. {@link #toString()} redacts it.
+ *
+ * @param local_user_name  the local user name to refer to; only meaningful within the context of the
+ *                         requesting API client, which bound the user in the first place
+ * @param secret           the secret to associate: a password, an encryption key, etc.
+ * @param custom           additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class User_Secret extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record User_Secret(
+        String local_user_name,
+        String secret,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(User_Secret.class);
 
-    /**
-     * The local user name to to refer. This is only available within the context of the requesting API client 
-     * which bound the user in the first place
-     */
-    public final String local_user_name;
-    
-    /**
-     * the secret to associate. This could be a password, an encryption key,etc.
-     */
-    public final String secret;
-    
-    public User_Secret(String local_user_name, String secret) {
-        if(local_user_name == null) throw new NullPointerException("User name must be specified");
-        this.local_user_name = local_user_name;
-        this.secret = secret == null ? "" : secret;
+    public User_Secret {
+        custom = API_Object.custom_of(custom);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public User_Secret(JsonObject object){
-        this.local_user_name = null;
-        this.secret = null;
-        
-        restore_object(object);
+    public User_Secret(String local_user_name, String secret) {
+        this(Objects.requireNonNull(local_user_name, "User name must be specified"),
+             secret == null ? "" : secret,
+             null);
+    }
+
+    public static User_Secret from_json(JsonObject object) {
+        return Json_Codec.decode(User_Secret.class, object);
+    }
+
+    @Override
+    public String toString() {
+        return "User_Secret[local_user_name=" + local_user_name
+             + ", secret=" + Secrets.redacted(secret) + "]";
     }
 }

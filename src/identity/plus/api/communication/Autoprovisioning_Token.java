@@ -32,51 +32,62 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Response;
+import identity.plus.api.json.Json_Codec;
+import identity.plus.api.json.Secrets;
 
 /**
- * The User_Secret request deposits a secret string associated with the user within
- * the context of the client that makes the request. This secret will only be available to the 
- * client who deposited.  
- * 
+ * A token that lets a managed service provision its own identity automatically.
+ *
+ * The token is a credential. {@link #toString()} redacts it.
+ *
+ * @param outcome          the outcome of the call; null when created locally
+ * @param managed_service  the managed service the token is issued for
+ * @param token            the autoprovisioning token
+ * @param custom           unrecognized fields, preserved for round-trips
+ *
  * @author Stefan Harsan Farr
  */
-public class Autoprovisioning_Token extends API_Response{
-    private static final long serialVersionUID = 1L;
-    
+public record Autoprovisioning_Token(
+        Outcome outcome,
+        String managed_service,
+        String token,
+        Map<String, String> custom
+) implements API_Response {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this response object as returned by the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Autoprovisioning_Token.class);
 
-    /**
-     * The local user name to to refer. This is only available within the context of the requesting API client 
-     * which bound the user in the first place
-     */
-    public final String managed_service;
-    
-    /**
-     * the secret to associate. This could be a password, an encryption key,etc.
-     */
-    public final String token;
-    
-    public Autoprovisioning_Token(String managed_service, String token) {
-        if(managed_service == null || token == null) throw new NullPointerException("Both, the managed service and the token must be specified");
-        this.managed_service = managed_service;
-        this.token = token;
+    public Autoprovisioning_Token {
+        custom = API_Object.custom_of(custom);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Autoprovisioning_Token(JsonObject object){
-        this.managed_service = null;
-        this.token = null;
-        
-        restore_object(object);
+    public Autoprovisioning_Token(String managed_service, String token) {
+        this(null, require(managed_service, token), token, null);
+    }
+
+    public static Autoprovisioning_Token from_json(JsonObject object) {
+        return Json_Codec.decode(Autoprovisioning_Token.class, object);
+    }
+
+    @Override
+    public String toString() {
+        return "Autoprovisioning_Token[outcome=" + outcome
+             + ", managed_service=" + managed_service
+             + ", token=" + Secrets.redacted(token) + "]";
+    }
+
+    private static String require(String managed_service, String token) {
+        if (managed_service == null || token == null)
+            throw new NullPointerException("Both, the managed service and the token must be specified");
+        return managed_service;
     }
 }

@@ -32,73 +32,64 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Response;
+import identity.plus.api.json.Json_Codec;
 
 /**
  * The Anonymous_ID is part of the Legacy HTTP call assembly.
- * This response comes URL encoded as part of the redirect when the the 
- * identity + service is used to read the client certificate from the user browser.  
+ * This response comes URL encoded as part of the redirect when the
+ * identity + service is used to read the client certificate from the user browser.
  *
- * This Object is only needed by implementations that use the identity + service over
- * http or do not have access to reading the SSL Client certificate for other reasons
- * 
- * This object will always come encrypted with the API Client's public key
- * 
+ * This object is only needed by implementations that use the identity + service over
+ * http or do not have access to reading the SSL client certificate for other reasons.
+ *
+ * This object will always come encrypted with the API Client's public key.
+ *
+ * @param outcome        the outcome of the call
+ * @param anonymous_id   the anonymous id as identified by the identity+ api
+ * @param serial_number  the serial number of the certificate as identified by the identity+ api
+ * @param salt           random text with no meaning in the identity + process; it only exists so
+ *                       that responses with the same values encrypt to different outputs.
+ *                       Can be discarded.
+ * @param custom         unrecognized fields, preserved for round-trips
+ *
  * @author Stefan Harsan Farr
  */
-public class Anonymous_ID extends API_Response{
-    private static final long serialVersionUID = 1L;
-    
+public record Anonymous_ID(
+        Outcome outcome,
+        String anonymous_id,
+        String serial_number,
+        String salt,
+        Map<String, String> custom
+) implements API_Response{
+
     /**
      * The JSON Name of this response object as returned by the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Anonymous_ID.class);
-        
-    /**
-     * The anonymous id as identified by the identity+ api
-     */
-    public final String anonymous_id;
-    
-    /**
-     * The serial number of the certificate as identified by the identity+ api
-     */
-    public final String serial_number;
 
-    /**
-     * This is a random sequence of text which is not needed as part of the identity + 
-     * processes and can be discarded.
-     * 
-     * It's sole purpose is to force different encryption outputs for responses with the
-     * same value. We use 16 characters, but normally even one character would suffice
-     * to change the output of the encrypted bytes. 
-     */
-    public final String salt;
-    
-    public Anonymous_ID(Outcome response, String anonymous_id, String serial_number){
-        super(response);
-        
-        if(anonymous_id == null) throw new NullPointerException("anonymous_id cannot be null");
-        if(serial_number == null) throw new NullPointerException("serial_number cannot be null");
-        
-        this.anonymous_id = anonymous_id;
-        this.serial_number = serial_number;
-        this.salt = Identity_Plus_Utils.random_text(16);
+    public Anonymous_ID {
+        Objects.requireNonNull(anonymous_id, "anonymous_id cannot be null");
+        Objects.requireNonNull(serial_number, "serial_number cannot be null");
+        custom = custom == null ? Map.of() : Collections.unmodifiableMap(new TreeMap<>(custom));
     }
 
     /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
+     * Creates a new Anonymous_ID with a freshly generated 16 character salt.
      */
-    public Anonymous_ID(JsonObject object){
-        // initialize fields to null
-        this.anonymous_id = null;
-        this.salt = null;
-        this.serial_number = null;
-        
-        // call the JSON restore method
-        restore_object(object);
+    public Anonymous_ID(Outcome outcome, String anonymous_id, String serial_number) {
+        this(outcome, anonymous_id, serial_number, Identity_Plus_Utils.random_text(16), null);
+    }
+
+    public static Anonymous_ID from_json(JsonObject object) {
+        return Json_Codec.decode(Anonymous_ID.class, object);
     }
 }

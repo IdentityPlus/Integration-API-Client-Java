@@ -32,66 +32,81 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+import java.util.Objects;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Response;
+import identity.plus.api.json.Json_Codec;
+import identity.plus.api.json.Secrets;
 
 /**
- * The core response for most request containing a reference number
- * It comes in response to a call that requires a reference number such as an intrusion report
- * 
+ * An X.509 identity issued by identity +: the certificate and private key, both
+ * PEM encoded, plus the same identity as a password-protected PKCS#12 bundle.
+ *
+ * Contains secret material. {@link #toString()} redacts it; arrays are copied on
+ * the way in and on the way out, so the record stays immutable.
+ *
+ * @param outcome      the outcome of the call
+ * @param p12          the identity in PKCS#12 format
+ * @param password     password for the PKCS#12 bundle
+ * @param certificate  PEM encoded certificate
+ * @param private_key  PEM encoded private key
+ * @param custom       unrecognized fields, preserved for round-trips
+ *
  * @author Stefan Harsan Farr
  */
-public class X509_Identity extends API_Response{
-    private static final long serialVersionUID = 1L;
-    
+public record X509_Identity(
+        Outcome outcome,
+        byte[] p12,
+        String password,
+        byte[] certificate,
+        byte[] private_key,
+        Map<String, String> custom
+) implements API_Response {
+
     /**
      * The JSON Name of this response object as returned by the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(X509_Identity.class);
-   
-    /**
-     * p12 certificate format
-     */
-    public final byte[] p12;
 
-    /**
-     * Password for the p12 format
-     */
-    public final String password;
-
-    /**
-     * PEM encoded certificate
-     */
-    public final byte[] certificate;
-    
-    /**
-     * PEM encoded private key
-     */
-    public final byte[] private_key;
-    
-    
-    public X509_Identity(Outcome response, byte[] p12, String password, byte[] certificate, byte[] private_key) {
-        super(response);
-        this.p12 = p12;
-        this.password = password;
-        this.certificate = certificate;
-        this.private_key = private_key;
+    public X509_Identity {
+        p12         = Secrets.copy(p12);
+        certificate = Secrets.copy(certificate);
+        private_key = Secrets.copy(private_key);
+        custom      = API_Object.custom_of(custom);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public X509_Identity(JsonObject object){
-        // initialize fields to null
-        this.p12 = null;
-        this.password = null;
-        this.certificate = null;
-        this.private_key = null;
-        
-        // call the restore mechanism
-        restore_object(object);
+    public X509_Identity(Outcome outcome, byte[] p12, String password, byte[] certificate, byte[] private_key) {
+        this(outcome, p12, password, certificate, private_key, null);
+    }
+
+    public static X509_Identity from_json(JsonObject object) {
+        return Json_Codec.decode(X509_Identity.class, object);
+    }
+
+    @Override public byte[] p12()         { return Secrets.copy(p12); }
+    @Override public byte[] certificate() { return Secrets.copy(certificate); }
+    @Override public byte[] private_key() { return Secrets.copy(private_key); }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof X509_Identity s
+            && outcome == s.outcome
+            && custom.equals(s.custom)
+            && Secrets.same(p12, password, certificate, private_key, s.p12, s.password, s.certificate, s.private_key);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * Objects.hash(outcome, custom) + Secrets.hash(p12, password, certificate, private_key);
+    }
+
+    @Override
+    public String toString() {
+        return Secrets.describe("X509_Identity", outcome, p12, password, certificate, private_key);
     }
 }

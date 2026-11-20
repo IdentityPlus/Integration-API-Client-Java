@@ -33,102 +33,145 @@
 package identity.plus.api.communication;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
+import identity.plus.api.json.Secrets;
 
 /**
- * Disclosure of use of personal information about a user bound with a certain local user id
- * 
+ * Discloses the use of personal information about a user, identified either by the local user
+ * name bound to the service, or by a hashed email or phone number anchor.
+ *
+ * At least one of {@code local_user_name}, {@code email_sha_anchor} or {@code phone_number_sha_anchor}
+ * must be given. Use {@link #email_anchor(String)} and {@link #phone_number_anchor(String)} to compute
+ * the anchors, so normalization is consistent across services.
+ *
+ * @param local_user_name          the local user name bound to the identity + account, if any
+ * @param email_sha_anchor         SHA-512 of the normalized email address; use when there is no local user name
+ * @param phone_number_sha_anchor  SHA-512 of the normalized phone number; use when there is no local user
+ *                                 name or email
+ * @param pii_type                 the kind of data point, in simple English: first name, last name, email address,
+ *                                 phone number, picture, date of birth, IP address, address, etc.
+ * @param sha_512                  SHA-512 of the normalized data point, for data that is comparable in hashed form.
+ *                                 Normalize first: lowercase unless case matters, trim, punctuation to spaces unless
+ *                                 the format is strict (e.g. IP addresses), no double spaces. Suggested formats:
+ *                                 phone +12123123456, IP 123.123.123.123, email username@example.com,
+ *                                 dates yyyymmdd, postal addresses as separate country / region / city / street /
+ *                                 postal code entries. Do not hash passwords, already hashed or encrypted data,
+ *                                 time series, images or biometrics.
+ * @param sample_count             number of samples held for the data point; meaningful for data that is not hashed
+ * @param custom                   additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Personal_Data_Disclosure_Request extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Personal_Data_Disclosure_Request(
+        String local_user_name,
+        byte[] email_sha_anchor,
+        byte[] phone_number_sha_anchor,
+        String pii_type,
+        byte[] sha_512,
+        BigInteger sample_count,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Personal_Data_Disclosure_Request.class);
 
-    /**
-     * The anonymous id to refer. This is only available when the Identity + account is not bound to local user
-     */
-    public final String local_user_name;
-    
-    /**
-     * The email anchor given in form of SHA 512 of the email address of the person who's PII is being stored.
-     * This should be used when there is no local user name associated
-     * The SHA 512 is computed on the fully lowercase email address with no leading or trailing spaces, for consistent results, example:
-     * username@example.com
-     */
-    public final byte[] email_sha_anchor;
-
-    /**
-     * The phone number anchor given in form of SHA 512 of the actual phone number of the person who's PII is being stored.
-     * This should be used when there is no local user, or email associated
-     * The SHA 512 is computed after normalizing the phone number by removing all spaces, punctuations and using + instead of 00  before country code, example:
-     * +CCPRFNUMBER (+12123123456)
-     */
-    public final byte[] phone_number_sha_anchor;
-    
-    /**
-     * The designation of the personally identifiable data-point in English language in simple semantical form. Example:
-     * first name, last name, name, email address, phone number, picture, date of birth, IP address, address, credit card number, social security number, etc.
-     */
-    public final String pii_type;
-
-    /**
-     * The SHA 512 of the PII data-point
-     * Data should be normalized before computing the SHA for consistent results
-     *         - unless the case is strict, all data-points should be lowercased before computing the SHA
-     *         - there should be no trailing or leading spaces to the text, unless required by the format
-     *         - all punctuation should be replaced with space, unless it uses a strict format like IP address: 123.123.123.123
-     *         - there should be no double spaces anywhere in the text, unless a strict formatting is required
-     *         
-     * A few data points formatting suggestions:
-     *         Phone number: +CCPRFNUMBER (+12123123456)
-     *         IP Address: XXX.XXX.XXX.XXX
-     *         Email Address: username@example.com
-     *         Dates: yyyymmdd (19770213)
-     *         Postal Addresses should be submitted separately as: country, state/county/region, city, street address, zip/postal code
-     *         User Name: username (all lowercase unless it is case sensitive locally
-     *         
-     * Only data-points that are comparable in hashed form (like those above) should be hashed. Passwords or other hashed or encrypted information, 
-     * time series data, images or other biometric information that are resource intensive to hash or are not comparable with similar data samples in hashed form,
-     * should not be hashed
-     */
-    public final byte[] sha_512;
-
-    /**
-     * Number of samples held on the specific data-point.
-     * This makes sense for all those data-points that are not hashed.
-     */
-    public final BigInteger sample_count;
-    
-    public Personal_Data_Disclosure_Request(String local_user_name, byte[] email_sha_anchor, byte[] phone_number_sha_anchor, String pii_type, byte[] sha_512, BigInteger sample_count) {
-        if(local_user_name == null && email_sha_anchor == null && phone_number_sha_anchor == null) throw new NullPointerException("Either local user name, phone_number_sha_anchor or email_sha_anchor must be specified");
-        this.local_user_name = local_user_name;
-        this.email_sha_anchor = email_sha_anchor;
-        this.phone_number_sha_anchor = phone_number_sha_anchor;
-        this.pii_type = pii_type;
-        this.sha_512 = sha_512;
-        this.sample_count = sample_count;
+    public Personal_Data_Disclosure_Request {
+        email_sha_anchor        = copy(email_sha_anchor);
+        phone_number_sha_anchor = copy(phone_number_sha_anchor);
+        sha_512                 = copy(sha_512);
+        sample_count            = sample_count == null ? BigInteger.ZERO : sample_count;
+        custom                  = API_Object.custom_of(custom);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Personal_Data_Disclosure_Request(JsonObject object){
-        this.local_user_name = null;
-        this.email_sha_anchor = null;
-        this.phone_number_sha_anchor = null;
-        this.pii_type = null;
-        this.sha_512 = null;
-        this.sample_count = BigInteger.ZERO;
-        
-        restore_object(object);
+    public Personal_Data_Disclosure_Request(String local_user_name, byte[] email_sha_anchor, byte[] phone_number_sha_anchor,
+                                            String pii_type, byte[] sha_512, BigInteger sample_count) {
+        this(require(local_user_name, email_sha_anchor, phone_number_sha_anchor), email_sha_anchor,
+             phone_number_sha_anchor, pii_type, sha_512, sample_count, null);
+    }
+
+    public static Personal_Data_Disclosure_Request from_json(JsonObject object) {
+        return Json_Codec.decode(Personal_Data_Disclosure_Request.class, object);
+    }
+
+    // --- anchor helpers: one normalization for every integrator ---
+
+    /** SHA-512 of the email address, trimmed and lowercased. */
+    public static byte[] email_anchor(String email) {
+        return sha_512_of(email.strip().toLowerCase(Locale.ROOT));
+    }
+
+    /** SHA-512 of the phone number in +CCNUMBER form: a leading 00 becomes +, everything but digits is removed. */
+    public static byte[] phone_number_anchor(String phone) {
+        String p = phone.strip();
+        if (p.startsWith("00")) p = "+" + p.substring(2);
+        String digits = p.replaceAll("[^0-9]", "");
+        return sha_512_of((p.startsWith("+") ? "+" : "") + digits);
+    }
+
+    /** SHA-512 of an already normalized data point. */
+    public static byte[] sha_512_of(String normalized) {
+        try {
+            return MessageDigest.getInstance("SHA-512").digest(normalized.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-512 is required by every Java platform", e);
+        }
+    }
+
+    // --- record plumbing for the byte[] components ---
+
+    @Override public byte[] email_sha_anchor()        { return copy(email_sha_anchor); }
+    @Override public byte[] phone_number_sha_anchor() { return copy(phone_number_sha_anchor); }
+    @Override public byte[] sha_512()                 { return copy(sha_512); }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof Personal_Data_Disclosure_Request r
+            && Objects.equals(local_user_name, r.local_user_name)
+            && Arrays.equals(email_sha_anchor, r.email_sha_anchor)
+            && Arrays.equals(phone_number_sha_anchor, r.phone_number_sha_anchor)
+            && Objects.equals(pii_type, r.pii_type)
+            && Arrays.equals(sha_512, r.sha_512)
+            && sample_count.equals(r.sample_count)
+            && custom.equals(r.custom);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(local_user_name, pii_type, sample_count, custom,
+                            Arrays.hashCode(email_sha_anchor), Arrays.hashCode(phone_number_sha_anchor),
+                            Arrays.hashCode(sha_512));
+    }
+
+    @Override
+    public String toString() {
+        return "Personal_Data_Disclosure_Request[local_user_name=" + local_user_name
+             + ", email_anchor=" + Secrets.redacted(email_sha_anchor)
+             + ", phone_anchor=" + Secrets.redacted(phone_number_sha_anchor)
+             + ", pii_type=" + pii_type
+             + ", sha_512=" + Secrets.redacted(sha_512)
+             + ", sample_count=" + sample_count + "]";
+    }
+
+    private static byte[] copy(byte[] b) { return b == null ? null : b.clone(); }
+
+    private static String require(String local_user_name, byte[] email_anchor, byte[] phone_anchor) {
+        if (local_user_name == null && email_anchor == null && phone_anchor == null)
+            throw new NullPointerException("Either local_user_name, email_sha_anchor or phone_number_sha_anchor must be specified");
+        return local_user_name;
     }
 }

@@ -32,79 +32,66 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
 
 /**
- * The Identity_Inquiry wraps the request for identity Profile for a visiting for 
- * which the identity + anonymous id has been determined.
- * 
- * if the anonymous id cannot be determined the SSL way, the legacy redirect must be employed.
- * 
+ * The Identity_Inquiry wraps the request for the identity profile of a visitor whose
+ * identity + certificate has been read.
+ *
+ * If the certificate cannot be read the SSL way, the legacy redirect must be used.
+ *
+ * At least one of {@code serial_number} or {@code anonymous_id} must be given.
+ *
+ * @param service        explicitly inquire for a specific service; the role-based relationship
+ *                       between this service and the inquiring service applies. May be null.
+ * @param serial_number  the certificate serial number, a string-encoded positive integer.
+ *                       As of version 2, this is the primary way clients are identified.
+ * @param anonymous_id   the anonymous id extracted from the visitor's identity + certificate.
+ *                       As of version 1.1, not required if the serial number is given.
+ * @param ip_address     the IP address of the visitor
+ * @param custom         additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Identity_Inquiry extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Identity_Inquiry(
+        String service,
+        String serial_number,
+        String anonymous_id,
+        String ip_address,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Identity_Inquiry.class);
 
-
-    /**
-     * The anonymous id extracted from the identity + certificate of the visitor
-     * As of version 1.1, this field is no longer required if the serial number is specified 
-     */
-    public final String anonymous_id;
-
-
-    /**
-     * The certificate serial number, String encoded positive integer number
-     * We will accept this as non mandatory during the migration period (v1 - v2)
-     * As of version 2, we are going to use the serial number to identify clients, which in itself is a unique reference
-     */
-    public final String serial_number;
-
-    /**
-     * The anonymous id extracted from the identity + certificate of the visitor
-     */
-    public final String ip_address;
-
-    /**
-     * Explicitely inquire for a specific service. Role based relationship will apply beteeen this service and the inquiring service
-     */
-    public final String service;
+    public Identity_Inquiry {
+        custom = API_Object.custom_of(custom);
+    }
 
     public Identity_Inquiry(String serial_number, String anonymous_id, String ip_address) {
-        if(anonymous_id == null && serial_number == null) throw new NullPointerException("either certificate_uid or serial number must be specified");
-
-        this.service = null;
-        this.ip_address = ip_address;
-        this.anonymous_id = anonymous_id;
-        this.serial_number = serial_number;
+        this(null, serial_number, anonymous_id, ip_address);
     }
 
     public Identity_Inquiry(String service, String serial_number, String anonymous_id, String ip_address) {
-        if(anonymous_id == null && serial_number == null) throw new NullPointerException("either certificate_uid or serial number must be specified");
-
-        this.service = service;
-        this.ip_address = ip_address;
-        this.anonymous_id = anonymous_id;
-        this.serial_number = serial_number;
+        this(require(service, serial_number, anonymous_id), serial_number, anonymous_id, ip_address, null);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Identity_Inquiry(JsonObject object){
-        service = null;
-        anonymous_id = null;
-        ip_address = null;
-        serial_number = null;
-        restore_object(object);
+    public static Identity_Inquiry from_json(JsonObject object) {
+        return Json_Codec.decode(Identity_Inquiry.class, object);
+    }
+
+    private static String require(String service, String serial_number, String anonymous_id) {
+        if (serial_number == null && anonymous_id == null)
+            throw new NullPointerException("Either serial_number or anonymous_id must be specified");
+        return service;
     }
 }

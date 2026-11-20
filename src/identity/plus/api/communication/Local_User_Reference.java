@@ -32,42 +32,44 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+import java.util.Objects;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
 
 /**
- * The Local_User_Reference request is needed for simple user operations that 
- * are done on users
- * 
+ * The Local_User_Reference request is needed for simple operations on users.
+ *
+ * @param local_user_name  the local user name to refer to; only meaningful within the context of the
+ *                         requesting API client, which bound the user in the first place
+ * @param custom           additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Local_User_Reference extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Local_User_Reference(
+        String local_user_name,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Local_User_Reference.class);
 
-    /**
-     * The local user name to to refer. This is only available within the context of the requesting API client 
-     * which bound the user in the first place
-     */
-    public final String local_user_name;
-    
-    public Local_User_Reference(String local_user_name) {
-        if(local_user_name == null) throw new NullPointerException("User name must be specified");
-        this.local_user_name = local_user_name;
+    public Local_User_Reference {
+        custom = API_Object.custom_of(custom);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Local_User_Reference(JsonObject object){
-        local_user_name = null;
-        restore_object(object);
+    public Local_User_Reference(String local_user_name) {
+        this(Objects.requireNonNull(local_user_name, "User name must be specified"), null);
+    }
+
+    public static Local_User_Reference from_json(JsonObject object) {
+        return Json_Codec.decode(Local_User_Reference.class, object);
     }
 }

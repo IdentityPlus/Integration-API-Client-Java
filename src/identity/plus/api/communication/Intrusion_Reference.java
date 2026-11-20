@@ -32,41 +32,45 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+import java.util.Objects;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
 
 /**
- * The Intrusion_Reference request is needed for simple intrusion operations that 
- * are done on intrusions, such as deletion
- * 
+ * The Intrusion_Reference request is needed for simple operations on intrusions,
+ * such as deletion.
+ *
+ * @param value   the intrusion to refer to; only meaningful within the context of the
+ *                requesting API client
+ * @param custom  additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Intrusion_Reference extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Intrusion_Reference(
+        String value,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Intrusion_Reference.class);
 
-    /**
-     * The intrusion to to refer. This is only available within the context of the requesting API client 
-     */
-    public final String value;
-    
-    public Intrusion_Reference(String value) {
-        if(value == null) throw new NullPointerException("Intrusion reference must be specified");
-        this.value = value;
+    public Intrusion_Reference {
+        custom = API_Object.custom_of(custom);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Intrusion_Reference(JsonObject object){
-        value = null;
-        restore_object(object);
+    public Intrusion_Reference(String value) {
+        this(Objects.requireNonNull(value, "Intrusion reference must be specified"), null);
+    }
+
+    public static Intrusion_Reference from_json(JsonObject object) {
+        return Json_Codec.decode(Intrusion_Reference.class, object);
     }
 }

@@ -34,184 +34,38 @@ package identity.plus.api.communication;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Response;
+import identity.plus.api.json.Json_Codec;
 
-/**
- * The core response for most request containing all the profile information
- * necessary.
- * 
- * @author Stefan Harsan Farr
- */
-public class Identity_Profile extends API_Response{
-    private static final long serialVersionUID = 1L;
-    
-    /**
-     * The JSON Name of this response object as returned by the ReST API
-     */
+public record Identity_Profile(
+                Outcome outcome,
+                String local_user_name,
+                String local_user_id,
+                String organizational_reference,
+                String organizational_name,
+                String organizational_email,
+                List<String> service_roles,
+                String user_secret,
+                List<String> trust_sponsors,
+                BigInteger sites_frequented,
+                BigInteger average_identity_age,
+                BigInteger max_identity_age,
+                BigInteger authorizing_certificate,
+                BigDecimal trust_score,
+                BigInteger local_trust,
+                BigInteger local_intrusions,
+                List<String> your_guarantees,
+                List<String> community_guarantees,
+                Map<String, String> custom
+        ) implements API_Response {
+
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Identity_Profile.class);
-    
-    /**
-     * The local user id that was bound with the identity+ account to which the validated 
-     * anonymous id belongs to, if any.
-     * 
-     * In case no local user id was bound to the identity + account by the requesting API Client
-     * this field will be empty.
-     */
-    public final String local_user_name;
-    public final String local_user_id;
 
-    /**
-     * The local_org_name is an organizational relationship reference (the domain name of the service, 
-     * or the LDAP reference or an organizational email address anonymous id belongs to, if any).
-     * 
-     * In case no organizational relationship was bound to the identity Plus account (ex an service relationship as opposed to organizational relationship)
-     * these fields will be empty.
-     */
-    public final String organizational_reference;
-    public final String organizational_name;
-    public final String organizational_email;
-
-    /**
-     * A list of web sites which the user chose as trust sponsors. An empty list can mean
-     * new user, user chose to not advertise presence on any sites, or a bot
-     */
-    public final List<String> service_roles;
-
-    /**
-     * The local user secret that was bound with the identity+ account to which the validated 
-     * anonymous id belongs to, if any.
-     * 
-     * In case no secret was bound to the identity + account by the requesting API Client
-     * this field will be empty.
-     */
-    public final String user_secret;
-    
-    /**
-     * A list of web sites which the user chose as trust sponsors. An empty list can mean
-     * new user, user chose to not advertise presence on any sites, or a bot
-     */
-    public final List<String> trust_sponsors;
-    
-    /**
-     * The number of sites this identity is bound. This is just a number it does not contain specifics
-     */
-    public final BigInteger sites_frequented;
-    
-    /**
-     * The average age of the accounts over the sites the identity has an account with 
-     */
-    public final BigInteger average_identity_age;
-
-    /**
-     * The maximum age of the accounts over the sites the identity has an account with 
-     */
-    public final BigInteger max_identity_age;
-
-    /**
-     * In case this was an out of band authorization, the id of the certificate that made the authorization
-     */
-    public final BigInteger authorizing_certificate;
-
-    /**
-     * Trust score, as computed by identity +. This is a logarithmic value and cannot be larger than 5.
-     * see trust score analysis on the https://identity.plus/resources/api-best-practices for details 
-     */
-    public final BigDecimal trust_score;
-    
-    /**
-     * The total number of trust awarded to this identity + user by the api client 
-     */
-    public final BigInteger local_trust;
-    
-    /**
-     * The total number of trust awarded to this identity + user by the api client 
-     */
-    public final BigInteger local_intrusions;
-
-    /**
-     * Your guarantees
-     */
-    public final List<String> your_guarantees;
-    
-    /**
-     * Your guarantees
-     */
-    public final List<String> community_guarantees;
-
-    public Identity_Profile(
-                    Outcome response, 
-                    String local_user_name, 
-                    String local_org_id, 
-                    String local_org_name, 
-                    String local_org_email, 
-                    String[] service_roles, 
-                    String user_secret, 
-                    String[] trust_sponsors, 
-                    BigInteger sites_frequented, 
-                    BigInteger average_identity_age, 
-                    BigInteger max_identity_age, 
-                    BigDecimal trust_score, 
-                    BigInteger local_trust, 
-                    BigInteger local_intrusions, 
-                    BigInteger authorizing_certificate, 
-                    String[] your_guarantees, 
-                    String[] community_guarantees) {
-        
-        super(response);
-        
-        if(trust_sponsors == null) throw new NullPointerException("Neither value can be null");
-        
-        this.local_user_name = local_user_name;
-        this.local_user_id = local_user_name;
-        this.organizational_reference = local_org_id;
-        this.organizational_name = local_org_name;
-        this.organizational_email = local_org_email;
-        this.user_secret = user_secret;
-        this.trust_sponsors = Collections.unmodifiableList(Arrays.asList(trust_sponsors));
-        this.service_roles = Collections.unmodifiableList(Arrays.asList(service_roles));
-        this.sites_frequented = sites_frequented;
-        this.average_identity_age = average_identity_age;
-        this.max_identity_age = max_identity_age;
-        this.trust_score = trust_score;
-        this.local_trust = local_trust;
-        this.local_intrusions = local_intrusions;
-        this.authorizing_certificate = authorizing_certificate;
-        this.your_guarantees = Collections.unmodifiableList(Arrays.asList(your_guarantees));
-        this.community_guarantees = Collections.unmodifiableList(Arrays.asList(community_guarantees));
-    }
-
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Identity_Profile(JsonObject object){
-        // initialize fields to null
-        this.local_user_name = null;
-        this.local_user_id = null;
-        this.organizational_reference = null;
-        this.organizational_name = null;
-        this.organizational_email = null;
-        this.service_roles = null;
-        this.user_secret = null;
-        this.trust_sponsors = null;
-        this.sites_frequented = null;
-        this.average_identity_age = null;
-        this.max_identity_age = null;
-        this.trust_score = null;
-        this.local_trust = null;
-        this.local_intrusions = null;
-        this.authorizing_certificate = null;
-        this.your_guarantees = null;
-        this.community_guarantees = null;
-        
-        // call the restore mechanism
-        restore_object(object);
-    }
+    public static Identity_Profile from_json(JsonObject o) { return Json_Codec.decode(Identity_Profile.class, o); }
 }

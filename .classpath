@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="/Artifactory/java-json-api/javax.json-1.0.4.jar"/>
 	<classpathentry kind="lib" path="/Artifactory/java-servlet-api/servlet-api-3.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-25">
 		<attributes>
@@ -9,5 +8,6 @@
 			<attribute name="owner.project.facets" value="java"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/Artifactory/java-json-api/javax.json-api-1.1.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

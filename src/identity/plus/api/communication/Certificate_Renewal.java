@@ -32,43 +32,58 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
+import identity.plus.api.json.Secrets;
 
 /**
- * The Certificate Renewal request is used to issue certificates for API Clients. This can happen in two ways, 
- * either the request is made with a valid previous certificate, in which a renewal procedure is executed,
- * or it needs to be performed with an initial secret and then an issuing is performed
- * 
+ * The Certificate Renewal request is used to issue certificates for API Clients. This can happen
+ * in two ways: either the request is made with a valid previous certificate, in which case a
+ * renewal procedure is executed, or it is made with an initial secret, in which case a new
+ * certificate is issued.
+ *
+ * The secret is a credential. {@link #toString()} redacts it.
+ *
+ * @param secret  the initial secret used to authorize issuing
+ * @param custom  additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Certificate_Renewal extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Certificate_Renewal(
+        String secret,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Certificate_Renewal.class);
 
-    /**
-     * The local user name to to refer. This is only available within the context of the requesting API client 
-     * which bound the user in the first place
-     */
-    public final String secret;
-    
-    public Certificate_Renewal(String secret){
-        if(secret == null) throw new NullPointerException("User name must be specified");
-        this.secret = secret;
+    public Certificate_Renewal {
+        custom = API_Object.custom_of(custom);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Certificate_Renewal(JsonObject object){
-        secret = null;
-        restore_object(object);
+    public Certificate_Renewal(String secret) {
+        this(require(secret), null);
+    }
+
+    public static Certificate_Renewal from_json(JsonObject object) {
+        return Json_Codec.decode(Certificate_Renewal.class, object);
+    }
+
+    @Override
+    public String toString() {
+        return "Certificate_Renewal[secret=" + Secrets.redacted(secret) + "]";
+    }
+
+    private static String require(String secret) {
+        if (secret == null) throw new NullPointerException("The secret must be specified");
+        return secret;
     }
 }

@@ -32,73 +32,71 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
+import identity.plus.api.json.Secrets;
 
 /**
- * The Agent Certificate Renewal request is used to issue certificates for Service Agents (Clients). 
- * This can happen in two ways,:
- * either the request is made for a valid previous certificate, in which a renewal procedure is executed,
- * or it needs to be performed with an initial secret and then an issuing is performed.
- * A service agent can rewnew its own certificate this way, but care must be taken as the previous certificate will be 
- * revoked uppon issuing the new one.
- * 
+ * The Service Agent Identity request is used to issue certificates for Service Agents (Clients).
+ * This can happen in two ways: either the request is made with a valid previous certificate,
+ * in which case a renewal procedure is executed, or it is made with an authorization token,
+ * in which case a new certificate is issued.
+ *
+ * A service agent can renew its own certificate this way, but care must be taken: the previous
+ * certificate is revoked when the new one is issued.
+ *
+ * The authorization token is a credential. {@link #toString()} redacts it.
+ *
+ * @param service_domain  domain name of the service where the agent should be issued. If null, the agent is
+ *                        created or renewed within the service the calling agent belongs to. If given, the
+ *                        calling service must have administrative rights in the target service, otherwise
+ *                        the operation fails.
+ * @param agent_name      name of the agent to issue the certificate for. If the agent exists it is renewed,
+ *                        otherwise a new agent is created.
+ * @param authorization   authorization token; only needed if the agent is not authenticating with a
+ *                        previously issued certificate
+ * @param custom          additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Service_Agent_Identity_Request extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Service_Agent_Identity_Request(
+        String service_domain,
+        String agent_name,
+        String authorization,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Service_Agent_Identity_Request.class);
 
-    /**
-     * Name of the agent to issue certificate for.
-     * If the name exists, it will renew, otherwise it will create a new agent
-     */
-    public final String agent_name;
-    
-    /**
-     * Domain Name of the service where the agent should be issued.
-     * 
-     * By default (if the domain is not specified), the agent will be created/renewed within the service
-     * to which the calling agent (the one whose certificate is used to make this call) belongs to.
-     * 
-     * If the target service is specified, then the calling service (the service to which the calling agent belongs to)
-     * must have administrative rights in target service. Otherwise this operation will fail 
-     */
-    public final String service_domain;
-    
-    /**
-     * Authorization token.
-     * This is only necessary if the agent is not authenticating itself with another, previously existing certificate
-     */
-    public final String authorization;
-
-    public Service_Agent_Identity_Request(String service_domain, String agent_name, String authorization){
-            this.service_domain = service_domain;
-            this.agent_name = agent_name;
-            this.authorization = authorization;
+    public Service_Agent_Identity_Request {
+        custom = API_Object.custom_of(custom);
     }
 
-    public Service_Agent_Identity_Request(String service_domain, String agent_name){
-        this.service_domain = service_domain;
-        this.agent_name = agent_name;
-        this.authorization = null;
+    public Service_Agent_Identity_Request(String service_domain, String agent_name, String authorization) {
+        this(service_domain, agent_name, authorization, null);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Service_Agent_Identity_Request(JsonObject object){
-            this.agent_name = null;
-            this.service_domain = null;
-            this.authorization = null;
-            
-            restore_object(object);
+    public Service_Agent_Identity_Request(String service_domain, String agent_name) {
+        this(service_domain, agent_name, null, null);
+    }
+
+    public static Service_Agent_Identity_Request from_json(JsonObject object) {
+        return Json_Codec.decode(Service_Agent_Identity_Request.class, object);
+    }
+
+    @Override
+    public String toString() {
+        return "Service_Agent_Identity_Request[service_domain=" + service_domain
+             + ", agent_name=" + agent_name
+             + ", authorization=" + Secrets.redacted(authorization) + "]";
     }
 }

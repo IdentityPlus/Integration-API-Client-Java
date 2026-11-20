@@ -58,8 +58,6 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.net.ssl.SSLContext;
 
-import identity.plus.api.communication.API_Request;
-import identity.plus.api.communication.API_Response;
 import identity.plus.api.communication.Anonymous_ID;
 import identity.plus.api.communication.Identity_Inquiry;
 import identity.plus.api.communication.Identity_Profile;
@@ -82,6 +80,8 @@ import identity.plus.api.communication.Simple_Response;
 import identity.plus.api.communication.Trust;
 import identity.plus.api.communication.Unlock_Request;
 import identity.plus.api.communication.User_Secret;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.API_Response;
 import identity.plus.api.util.HTTPS_Utils;
 
 /**
@@ -350,15 +350,16 @@ public class API_Channel {
      * @return
      */
     public static API_Response decode_response(JsonObject jsso){
-        if(jsso.keySet().contains(Identity_Profile.JSON_NAME)) return new Identity_Profile(jsso.getJsonObject(Identity_Profile.JSON_NAME));
-        else if(jsso.keySet().contains(Anonymous_ID.JSON_NAME)) return new Anonymous_ID(jsso.getJsonObject(Anonymous_ID.JSON_NAME));
-        else if(jsso.keySet().contains(Reference_Number.JSON_NAME)) return new Reference_Number(jsso.getJsonObject(Anonymous_ID.JSON_NAME));
-        else if(jsso.keySet().contains(Intent_Reference.JSON_NAME)) return new Intent_Reference(jsso.getJsonObject(Intent_Reference.JSON_NAME));
-        else if(jsso.keySet().contains(Message_Delivery_Response.JSON_NAME)) return new Intent_Reference(jsso.getJsonObject(Message_Delivery_Response.JSON_NAME));
-        else if(jsso.keySet().contains(Service_Identity.JSON_NAME)) return new Service_Identity(jsso.getJsonObject(Service_Identity.JSON_NAME));
-        else if(jsso.keySet().contains(Service_Agent_Identity.JSON_NAME)) return new Service_Agent_Identity(jsso.getJsonObject(Service_Agent_Identity.JSON_NAME));
-        else if(jsso.keySet().contains(Recovery_Code.JSON_NAME)) return new Recovery_Code(jsso.getJsonObject(Recovery_Code.JSON_NAME));
-        else return new Simple_Response(jsso.getJsonObject(Simple_Response.JSON_NAME));
+//        if(jsso.keySet().contains(Identity_Profile.JSON_NAME)) return new Identity_Profile(jsso.getJsonObject(Identity_Profile.JSON_NAME));
+        if(jsso.keySet().contains(Identity_Profile.JSON_NAME)) return Identity_Profile.from_json(jsso.getJsonObject(Identity_Profile.JSON_NAME));
+        else if(jsso.keySet().contains(Anonymous_ID.JSON_NAME)) return Anonymous_ID.from_json(jsso.getJsonObject(Anonymous_ID.JSON_NAME));
+        else if(jsso.keySet().contains(Reference_Number.JSON_NAME)) return Reference_Number.from_json(jsso.getJsonObject(Reference_Number.JSON_NAME));
+        else if(jsso.keySet().contains(Intent_Reference.JSON_NAME)) return Intent_Reference.from_json(jsso.getJsonObject(Intent_Reference.JSON_NAME));
+        else if(jsso.keySet().contains(Message_Delivery_Response.JSON_NAME)) return Intent_Reference.from_json(jsso.getJsonObject(Message_Delivery_Response.JSON_NAME));
+        else if(jsso.keySet().contains(Service_Identity.JSON_NAME)) return Service_Identity.from_json(jsso.getJsonObject(Service_Identity.JSON_NAME));
+        else if(jsso.keySet().contains(Service_Agent_Identity.JSON_NAME)) return Service_Agent_Identity.from_json(jsso.getJsonObject(Service_Agent_Identity.JSON_NAME));
+        else if(jsso.keySet().contains(Recovery_Code.JSON_NAME)) return Recovery_Code.from_json(jsso.getJsonObject(Recovery_Code.JSON_NAME));
+        else return Simple_Response.from_json(jsso);
     }
     
     /**
@@ -426,12 +427,12 @@ public class API_Channel {
     }
     
     public String intent_endpoint(Intent_Reference intent){
-        String subdomain = intent.subdomain;
+        String subdomain = intent.subdomain();
         if(subdomain == null) subdomain = "selfauthority";
         String ep = endpoint.replaceAll("api", subdomain) ;
         ep = ep.substring(0,  ep.lastIndexOf('/'));
         
-        return ep + "/" + intent.value;
+        return ep + "/" + intent.value();
     }
 
     public String intent_endpoint(Intent_Reference intent, String path){
@@ -440,7 +441,7 @@ public class API_Channel {
         
         if(path.length() > 0) path = path + "/";
         
-        return ep + "/" + path + intent.value;
+        return ep + "/" + path + intent.value();
     }
 
     public API_Response issue_service_identity(boolean force) throws IOException{

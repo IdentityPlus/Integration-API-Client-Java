@@ -32,46 +32,42 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
 
 /**
- * The Agent Certificate Renewal request is used to issue certificates for Service Agents (Clients). 
- * This can happen in two ways,:
- * either the request is made for a valid previous certificate, in which a renewal procedure is executed,
- * or it needs to be performed with an initial secret and then an issuing is performed.
- * A service agent can rewnew its own certificate this way, but care must be taken as the previous certificate will be 
- * revoked uppon issuing the new one.
- * 
+ * Requests the revocation of an identity + certificate, identified by its serial number.
+ *
+ * @param serial_number  the serial number of the certificate to revoke, a string-encoded positive integer
+ * @param custom         additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Identity_Revocation_Request extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Identity_Revocation_Request(
+        String serial_number,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Identity_Revocation_Request.class);
 
-    /**
-     * Name of the agent to issue certificate for.
-     * If the name exists, it will renew, otherwise it will create a new agent
-     */
-    public final String serial_number;
-    
-    public Identity_Revocation_Request(String serial_number){
-            this.serial_number = serial_number;
+    public Identity_Revocation_Request {
+        custom = API_Object.custom_of(custom);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Identity_Revocation_Request(JsonObject object){
-            this.serial_number = null;
-            
-            restore_object(object);
+    public Identity_Revocation_Request(String serial_number) {
+        this(serial_number, null);
+    }
+
+    public static Identity_Revocation_Request from_json(JsonObject object) {
+        return Json_Codec.decode(Identity_Revocation_Request.class, object);
     }
 }

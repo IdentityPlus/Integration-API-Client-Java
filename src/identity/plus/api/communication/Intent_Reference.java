@@ -32,48 +32,60 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Response;
+import identity.plus.api.json.Json_Codec;
 
 /**
- * The Intent_Reference response is needed to reference the intended operation & context when redirecting the user to Identity Plus
- * 
+ * The Intent_Reference response is needed to reference the intended operation & context
+ * when redirecting the user to Identity Plus.
+ *
+ * @param outcome    the outcome of the call
+ * @param value      the intent to refer
+ * @param subdomain  the subdomain the intent refers to
+ * @param challenge  the challenge associated with the intent
+ * @param custom     unrecognized fields, preserved for round-trips
+ *
  * @since v2
  * @author Stefan Harsan Farr
  */
-public class Intent_Reference extends API_Response{
-    private static final long serialVersionUID = 1L;
-    
+public record Intent_Reference(
+        Outcome outcome,
+        String value,
+        String subdomain,
+        String challenge,
+        Map<String, String> custom
+) implements API_Response {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this response object as returned by the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Intent_Reference.class);
 
-    /**
-     * The intent to refer
-     */
-    public final String value;
-    public final String subdomain;
-    public final String challenge;
-    
-    public Intent_Reference(String value, String challenge_or_subdomain) {
-        super(Outcome.OK_0000_Acknowledged);
-        if(value == null) throw new NullPointerException("Intent reference must be specified");
-        this.value = value;
-        this.challenge = challenge_or_subdomain;
-        this.subdomain = challenge_or_subdomain;
+    public Intent_Reference {
+        custom = custom == null ? Map.of() : Collections.unmodifiableMap(new TreeMap<>(custom));
     }
 
     /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
+     * Creates an acknowledged intent reference. The second argument is written to both
+     * {@code subdomain} and {@code challenge}, as before.
      */
-    public Intent_Reference(JsonObject object){
-        value = null;
-        challenge = null;
-        subdomain = null;
-        restore_object(object);
+    public Intent_Reference(String value, String challenge_or_subdomain) {
+        this(Outcome.OK_0000_Acknowledged,
+             Objects.requireNonNull(value, "Intent reference must be specified"),
+             challenge_or_subdomain,
+             challenge_or_subdomain,
+             null);
+    }
+
+    public static Intent_Reference from_json(JsonObject object) {
+        return Json_Codec.decode(Intent_Reference.class, object);
     }
 }

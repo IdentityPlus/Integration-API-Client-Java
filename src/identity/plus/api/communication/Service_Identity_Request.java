@@ -32,54 +32,47 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Map;
+
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
 
 /**
- * The Certificate Renewal request is used to issue certificates for API Clients. This can happen in two ways, 
- * either the request is made with a valid previous certificate, in which a renewal procedure is executed,
- * or it needs to be performed with an initial secret and then an issuing is performed
- * 
+ * The Service Identity request issues or renews the identity of a service.
+ *
+ * @param service_domain  domain name of the service the identity should be issued for. If null, the identity
+ *                        is created or renewed for the service the calling agent belongs to. If given, the
+ *                        calling service must have administrative rights in the target service, otherwise
+ *                        the operation fails.
+ * @param force_renewal   request renewal even if it is not necessary
+ * @param custom          additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Service_Identity_Request extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Service_Identity_Request(
+        String service_domain,
+        Boolean force_renewal,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Service_Identity_Request.class);
 
-    /**
-     * Request renewal even if it is not necessary
-     */
-    public final Boolean force_renewal;
-    
-    /**
-     * Domain Name of the service for which identity should be issued.
-     * 
-     * By default (if the domain is not specified), the identity will be created/renewed for the service
-     * to which the calling agent (the one whose certificate is used to make this call) belongs to.
-     * 
-     * If the target service is specified, then the calling service (the service to which the calling agent belongs to)
-     * must have administrative rights in target service. Otherwise this operation will fail 
-     */
-    public final String service_domain;
-    
-    public Service_Identity_Request(String service_domain, Boolean force_renewal){
-            this.force_renewal = force_renewal;
-            this.service_domain = service_domain;
+    public Service_Identity_Request {
+        custom = API_Object.custom_of(custom);
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Service_Identity_Request(JsonObject object){
-            this.force_renewal = null;
-            this.service_domain = null;
-            restore_object(object);
+    public Service_Identity_Request(String service_domain, Boolean force_renewal) {
+        this(service_domain, force_renewal, null);
+    }
+
+    public static Service_Identity_Request from_json(JsonObject object) {
+        return Json_Codec.decode(Service_Identity_Request.class, object);
     }
 }

@@ -32,95 +32,98 @@
  */
 package identity.plus.api.communication;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Object;
+import identity.plus.api.json.API_Request;
+import identity.plus.api.json.Json_Codec;
 
 /**
- * Delivers a message to a user of a service identified by the local user bound the the services
- * 
+ * Delivers a message to users of a service, identified by the local user names bound to the service.
+ *
+ * @param recipients    the local user names to send the message to; only resolvable when the identity +
+ *                      account is bound to a local user. Never null.
+ * @param subject_line  the message subject line
+ * @param impact        classification of the nature of the information, by impact
+ * @param thumbnail     thumbnail image, PNG or JPG encoded
+ * @param brief         a short description of what the message is about
+ * @param url           the online version of the message
+ * @param action        what the user needs to do about the message
+ * @param expiry        if set, the message is deleted at this time and the user can no longer view or act on it.
+ *                      Given in GMT; shown to the user in their local time.
+ * @param custom        additional fields, sent as-is
+ *
  * @author Stefan Harsan Farr
  */
-public class Message_Delivery_Request extends API_Request{
-    private static final long serialVersionUID = 1L;
-    
+public record Message_Delivery_Request(
+        List<String> recipients,
+        String subject_line,
+        String impact,
+        byte[] thumbnail,
+        String brief,
+        String url,
+        String action,
+        Date expiry,
+        Map<String, String> custom
+) implements API_Request {
+
     /**
-     * The JSON Name of this request object as returned by the ReST API
+     * The JSON Name of this request object as sent to the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Message_Delivery_Request.class);
 
-    /**
-     * The list of anonymous local user names to send the message to. These are only available when the Identity + account is bound to local user.
-     */
-    public final List<String> recipients;
-    
-    /**
-     * Thumbnail image PNG or JPG encoded
-     */
-    public final byte[] thumbnail;
-
-    /**
-     * Message subject line
-     */
-    public final String subject_line;
-    
-    /**
-     * Classification of the nature the information, by impact
-     */
-    public final String impact;
-
-    /**
-     * A short description of the what the message is about
-     */
-    public final String brief;
-
-    /**
-     * The online version of the message
-     */
-    public final String url;
-
-    /**
-     * what the message is about, what the user needs to do about it: read it, 
-     */
-    public final String action;
-
-    /**
-     * If the message is set to expire at a certain date, it will be deleted at that date and the user can no longer view it or act upon it
-     * Time should be given into GMT time and will be translated to user local
-     */
-    public final Date expiry;
-    
-
-    public Message_Delivery_Request(List<String> local_user_name, String subject_line, String impact, byte[] thumbnail, String brief, String url, String action, Date expiry) {
-            this.recipients = local_user_name;
-            this.impact = impact;
-            this.thumbnail = thumbnail;
-            this.subject_line = subject_line;
-            this.brief = brief;
-            this.url = url;
-            this.action = action;
-            this.expiry = expiry;
+    public Message_Delivery_Request {
+        recipients = recipients == null ? List.of() : List.copyOf(recipients);
+        thumbnail  = thumbnail == null ? null : thumbnail.clone();
+        expiry     = expiry == null ? null : new Date(expiry.getTime());
+        custom     = API_Object.custom_of(custom);
     }
 
+    public Message_Delivery_Request(List<String> recipients, String subject_line, String impact, byte[] thumbnail,
+                                    String brief, String url, String action, Date expiry) {
+        this(recipients, subject_line, impact, thumbnail, brief, url, action, expiry, null);
+    }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Message_Delivery_Request(JsonObject object){
-        this.recipients = null;
-        this.impact = null;
-        this.thumbnail = null;
-        this.subject_line = null;
-        this.brief = null;
-        this.url = null;
-        this.action = null;
-        this.expiry = null;
-        
-        restore_object(object);
+    public static Message_Delivery_Request from_json(JsonObject object) {
+        return Json_Codec.decode(Message_Delivery_Request.class, object);
+    }
+
+    @Override public byte[] thumbnail() { return thumbnail == null ? null : thumbnail.clone(); }
+    @Override public Date expiry()      { return expiry == null ? null : new Date(expiry.getTime()); }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof Message_Delivery_Request m
+            && recipients.equals(m.recipients)
+            && Objects.equals(subject_line, m.subject_line)
+            && Objects.equals(impact, m.impact)
+            && Arrays.equals(thumbnail, m.thumbnail)
+            && Objects.equals(brief, m.brief)
+            && Objects.equals(url, m.url)
+            && Objects.equals(action, m.action)
+            && Objects.equals(expiry, m.expiry)
+            && custom.equals(m.custom);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * Objects.hash(recipients, subject_line, impact, brief, url, action, expiry, custom)
+             + Arrays.hashCode(thumbnail);
+    }
+
+    @Override
+    public String toString() {
+        return "Message_Delivery_Request[recipients=" + recipients.size()
+             + ", subject_line=" + subject_line
+             + ", impact=" + impact
+             + ", thumbnail=" + (thumbnail == null ? "null" : thumbnail.length + " bytes")
+             + ", expiry=" + expiry + "]";
     }
 }

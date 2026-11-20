@@ -33,51 +33,49 @@
 package identity.plus.api.communication;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import javax.json.JsonObject;
 
 import identity.plus.api.Identity_Plus_Utils;
+import identity.plus.api.json.API_Response;
+import identity.plus.api.json.Json_Codec;
 
 /**
- * Message delivery sumary
- * 
+ * Message delivery summary.
+ *
+ * @param outcome            the outcome of the call
+ * @param message_reference  the reference number of the delivered message
+ * @param failed_recipients  the recipients the message could not be delivered to; never null, empty if none failed
+ * @param custom             unrecognized fields, preserved for round-trips
+ *
  * @author Stefan Harsan Farr
  */
-public class Message_Delivery_Response extends API_Response{
-    private static final long serialVersionUID = 1L;
-    
+public record Message_Delivery_Response(
+        Outcome outcome,
+        BigInteger message_reference,
+        List<String> failed_recipients,
+        Map<String, String> custom
+) implements API_Response {
+
     /**
      * The JSON Name of this response object as returned by the ReST API
      */
     public static final String JSON_NAME = Identity_Plus_Utils.json_name(Message_Delivery_Response.class);
-   
-    /**
-     * The reference number value
-     */
-    public final BigInteger message_reference;
-    
-    /**
-     * The reference number value
-     */
-    public final List<String> failed_recipients;
-    
-    public Message_Delivery_Response(Outcome response, BigInteger message_reference, List<String> failed_recipients) {
-        super(response);
-        this.message_reference = message_reference;
-        this.failed_recipients = failed_recipients;
+
+    public Message_Delivery_Response {
+        failed_recipients = failed_recipients == null ? List.of() : List.copyOf(failed_recipients);
+        custom = custom == null ? Map.of() : Collections.unmodifiableMap(new TreeMap<>(custom));
     }
 
-    /**
-     * Empty initializer, it is necessary to initialize to null the public final fields.
-     * The deserializer will override the final modifier and re-initialize the fields
-     * with the proper values  
-     */
-    public Message_Delivery_Response(JsonObject object){
-        // initialize fields to null
-        this.message_reference = null;
-        this.failed_recipients = null;
-        // call the restore mechanism
-        restore_object(object);
+    public Message_Delivery_Response(Outcome outcome, BigInteger message_reference, List<String> failed_recipients) {
+        this(outcome, message_reference, failed_recipients, null);
+    }
+
+    public static Message_Delivery_Response from_json(JsonObject object) {
+        return Json_Codec.decode(Message_Delivery_Response.class, object);
     }
 }
